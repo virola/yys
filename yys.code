@@ -1,0 +1,1383 @@
+// 默认延时
+StringDelay = 2000
+Delay 5000
+appL = 0
+appT = 40
+appR = 1024
+appB = 768
+
+Global maxbattle '最大自动战斗次数
+Global shiju '石距
+Global xuanshang '接受悬赏
+Global fuben '打副本
+Global yuhun '打御魂
+Global tupo'打个人突破
+Global gtupo '打寮突破
+Global juexing'打觉醒
+Global jxselect'觉醒材料
+Global yhselect'御魂材料
+Global fbselect'副本章节
+Global islock '是否自动锁定阵容
+
+Global MODE '当前进行模式，0-大地图待命 1-副本 2-觉醒 3-御魂 4-突破 5-寮突破
+
+Global tpcount
+Global gtpcount
+Global jxcount
+Global fbcount
+Global yhcount
+// init count
+tpcount = Main.tpcount.Text
+gtpcount = Main.gtpcount.Text
+jxcount = Main.jxcount.Text
+fbcount = Main.fbcount.Text
+yhcount = Main.yhcount.Text
+
+// ====================================================================================
+// 程序界面事件处理
+// ====================================================================
+Event Main.LoadOver
+    // nothing
+End Event
+// 初始进行结界突破
+MODE = Main.mode.ListIndex
+Event Main.mode.SelectChange
+    MODE = Main.mode.ListIndex
+    Call showTips("Change MODE:" & MODE)
+End Event
+// action
+Function updateaction()
+    Select Case MODE
+    Case 0
+        Main.action.Caption = "待机模式"
+    Case 1
+        Main.action.Caption = "副本"
+    Case 2
+        Main.action.Caption = "觉醒"
+    Case 3
+        Main.action.Caption = "御魂"
+    Case 4
+        Main.action.Caption = "个人结界突破"
+    Case 5
+        Main.action.Caption = "阴阳寮突破"
+    End Select
+End Function
+// 当前战斗次数
+btimes = 0
+// 随机数生成
+Function randnumber() 
+    最小 = -10*0.9 
+    最大 = 10*0.91 
+    // 根据实际情况设置，最小不要低过1 最大可以是3~~~10 或者3~~~~100。
+    Randomize
+    randnumber = Round((最大 - 最小 + 1) * Rnd + 最小) 
+End Function
+// 屏幕显示提示
+Function showTips(txt)
+    Main.tips.Caption = txt 
+    ' Call Plugin.Msg.HideScrTXT()
+    ' Delay 500
+    ' Call Plugin.Msg.ShowScrTXT(appL, appT-30, 1024, 100, txt, "0000FF")
+End Function
+// 随机点击屏幕
+Sub randomclick()
+    btop = 100
+    bright = 100
+    bleft = 200
+    bbottom = 250
+    Randomize
+    x = Round((appR -bright - appL - bleft) * Rnd + appL + bleft)
+    y = Round((appB - bbottom - appT  - btop) * Rnd + appT + btop)
+    MoveTo x, y 
+    Delay StringDelay
+    LeftClick 1
+End Sub
+Sub OnScriptExit()'脚本停止事件
+    btimes = 0
+    Call showTips("app stop.")
+End Sub
+
+Function yhinit()
+    // 高度都是340
+    Select Case Main.yhselect.ListIndex
+    Case 0
+        yhselect = 340
+    Case 1
+        yhselect = 800
+    End Select
+End Function
+Function jxinit()
+    // 高度都是300
+    Select Case Main.jxselect.ListIndex
+    Case 0
+        jxselect = 225
+    Case 1
+        jxselect = 470
+    Case 2
+        jxselect = 700
+    Case 3
+        jxselect = 950
+    End Select
+End Function
+
+// 句柄获取
+dim yys 
+// 找到程序位置
+Call showTips("finding app...")
+// 查找程序句柄
+yys = Plugin.Window.Find(0, "阴阳师-网易游戏")
+If yys <> 0 Then 
+    //激活窗口
+    Call Plugin.Window.Restore(yys)
+    sRect = Plugin.Window.GetClientRect(yys)
+    //下面这句用于分割字符串,将横坐标和纵坐标分成两个字符串   
+    dim MyArray
+    MyArray = Split(sRect, "|")   
+    //下面这句将字符串转换成数值   
+    appL = Clng(MyArray(0)): appT = Clng(MyArray(1))   
+    appR = Clng(MyArray(2)): appB = Clng(MyArray(3))   
+    Call showTips(yys & " |左" & appL & ",右 " & appR & ",上" & appT & ",下" & appB)
+Else
+    Call showTips("阴阳师桌面版没有运行，请先运行游戏再启动程序")
+    ExitScript 
+End If
+Delay StringDelay
+// 用固定坐标值计算的方法算了
+
+// 町中按钮位置============
+// 逢魔之时
+Dim fmbtn(1)
+fmbtn(0) = 565 + appL
+fmbtn(1) = 150 + appT
+// 斗技
+Dim djbtn(1)
+djbtn(0) = 585 + appL
+djbtn(1) = 150 + appT
+// 封魔的奖励
+Dim fmgift(1)
+fmgift(0) = 1070 + appL
+fmgift(1) = 210 + appT
+// 现世疯魔大图标位置
+Dim xsfm(1)
+xsfm(0) = 1040 + appL
+xsfm(1) = 560 + appT
+// 准备按钮
+Dim readyBtn(1)
+readyBtn(0) = 1044 + appL
+readyBtn(1) = 480 + appT
+// 右侧副本最后一章的位置
+Dim lastPos(1)
+lastPos(0) = 1034 + appL
+lastPos(1) = 530 + appT
+// 章节的上下间隔
+Dim chgap
+chgap = 105
+// 困难模式按钮位置
+Dim hardBtn(1)
+hardBtn(0) = 418 + appL
+hardBtn(1) = 195 + appT
+// 副本的探索按钮位置
+Dim enterBtn(1)
+enterBtn(0) = appL + 840
+enterBtn(1) = appT + 470
+// 结束位置
+Dim overPos(1)
+overPos(0) = appL + 30
+overPos(1) = appT + 200
+// 任意位置点击
+Dim anyPos(1)
+// 固定boss位置
+Dim bossPos(1)
+bossPos(0) = appL + 600
+bossPos(1) = appT + 250
+// 探索界面左下角的按钮位置
+// 觉醒入口
+Dim jxbtn(1)
+jxbtn(0) = 85 + appL
+jxbtn(1) = appB - 50
+// 御魂入口
+Dim yhbtn(1)
+yhbtn(0) = jxbtn(0) + 95
+yhbtn(1) = jxbtn(1)
+// 御灵入口
+Dim ylbtn(1)
+ylbtn(0) = yhbtn(0) + 95 * 2
+ylbtn(1) = jxbtn(1)
+// 结界突破入口
+Dim jjbtn(1)
+jjbtn(0) = yhbtn(0) + 95
+jjbtn(1) = jxbtn(1)
+// 突破界面的关闭
+Dim tupoclose(1)
+tupoclose(0) = 1050 + appL
+tupoclose(1) = 60 + appT
+// 寮突破入口
+Dim gtpbtn(1)
+gtpbtn(0) = 1090 + appL
+gtpbtn(1) = 300 + appT
+// 结界刷新按钮位置
+Dim rebtn(1)
+rebtn(0) = 885 + appL
+rebtn(1) = 480 + appT
+//觉醒和御魂材料选择界面的关闭按钮位置
+Dim chclose(1)
+chclose(0) = 1100 + appL
+chclose(1) = 140 + appT
+// 挑战按钮位置
+Dim tzbtn(1)
+tzbtn(0) = 842 + appL
+tzbtn(1) = 450 + appT
+// 御魂左侧怪位置
+Dim yhleft(1)
+yhleft(0) = 256 + appL
+yhleft(1) = 185 + appT
+// 觉醒小怪
+Dim jxguai(1)
+jxguai(0) = 820 + appL
+jxguai(1) = 238 + appT
+// 阴阳寮第一个结界的位置
+Dim jj1(1)
+jj1(0) = 590
+jj1(1) = 170
+// 购买体力关闭
+Dim tlclose(1)
+tlclose(0) = 830 + appL
+tlclose(1) = 175 + appT
+// 左侧妖气怪范围
+Dim yq(3)
+yq(0) = 110 + appL
+yq(1) = 130 + appT
+yq(2) = 110 + appL
+yq(3) = 550 + appT
+// ================================================================
+// 当前页面所处位置
+// ================================================================
+// -1 - 没有任何位置，不需要执行动作
+// 0-角色登录后的初始界面，最开始的
+// 1-首页点击探索按钮进入的界面，判断有返回按钮和结界按钮同时
+// 2-探索副本的界面，判断只有返回按钮
+// 3-战斗中的界面，有小返回按钮（考虑准备按钮的状态）
+// 31-准备界面
+// 41-sucess战斗结束
+// 42-fail
+// 43-战斗结算界面
+//
+// 11 - 阴阳寮突破界面
+// 12 - 个人突破界面
+//
+// 20 - 探索副本挑战界面
+// 30 - 觉醒挑战界面
+// 31 - 觉醒选择界面
+// 40 - 御魂挑战界面
+// 41 - 御魂选择界面
+//
+// 50 - 组队挑战界面
+// 100 - 石距出现界面
+// 120 - 体力不足界面
+// 130 - 经验满了的界面
+// 150 - 有进攻按钮的界面
+Dim nowPage
+nowPage = 0
+// 运行小时
+Dim runhours
+Dim startTime
+startTime = Now
+// 上次休息时间
+Dim restmark
+restmark = startTime
+// 自动关机时间
+// 战斗寻找次数
+searchTimes = 0
+// 结界攻击序号标记
+jjnum = 0
+// 关闭按钮位置
+Dim closebtn(1)
+// 左上返回按钮位置
+Dim backbtn(1)
+// 大地图中的加成按钮位置
+Dim buffbtn(1)
+buffbtn(0) = 385
+buffbtn(1) = 35
+// 剧情跳过按钮
+Dim skipbtn(1)
+// 石距位置
+Dim sjbtn(1)
+// yaoqi 
+Dim yqPos(1)
+// 进入副本次数
+Dim fbtimes
+fbtimes = 0
+// 副本中寻找战斗次数
+Dim fbsearch
+fbsearch = 0
+Dim loopcount
+loopcount = 0
+// marks
+fbmark = 0
+jxmark = 0
+yhmark = 0
+tpmark = 0
+gtpmark = 0
+// 计算次数和mark
+Function countMark(success)
+    Select Case MODE
+    Case 1
+        fbcount = fbcount + 1
+        fbmark = fbmark + 1
+    Case 2
+        jxcount = jxcount + 1
+        jxmark = jxmark + 1
+    Case 3
+        yhcount = yhcount + 1
+        yhmark = yhmark + 1
+    Case 4
+        tpcount = tpcount + 1
+        tpmark = tpmark + 1
+    Case 5
+        gtpcount = gtpcount + 1
+        if success = 1 Then
+            gtpmark = gtpmark + 1
+        End If
+    End Select
+    // show count 
+    Main.fbcount.Caption = fbcount
+    Main.jxcount.Caption = jxcount
+    Main.yhcount.Caption = yhcount
+    Main.tpcount.Caption = tpcount
+    Main.gtpcount.Caption = gtpcount
+End Function
+// 鼠标拖拽设定
+Sub dragmove(x1, y1, x2, y2, time, phd)
+    Dim mx
+    Dim my
+    
+    xoffset = Abs(x2 - x1)
+    yoffset = Abs(y2 - y1)
+    rgap = xoffset
+    If yoffset > xoffset Then 
+        rgap = yoffset
+    End If
+    // 执行次数
+    count = Round(rgap / phd)
+    delaygap = Int(time /rgap * phd)
+    
+    index = 0
+    MoveTo x1+randnumber, y1+randnumber
+    Delay StringDelay
+    LeftDown 1
+    
+    Do While index < rgap
+        //TracePrint "index:" & index
+        sx = Int((x2 * index + x1 * (rgap - index)) / rgap)
+        sy = Int((y2 * index + y1 * (rgap - index)) / rgap)
+        
+        MoveTo sx, sy
+        Delay delaygap
+        index = index + phd 
+    Loop
+    
+    // 拖动鼠标
+    MoveTo x2+randnumber, y2+randnumber
+    Delay delaygap
+    LeftUp 1
+End Sub
+
+// 打结界
+Sub jjattack()
+    iCoord = Plugin.Pic.FindMultiPic(appL, appT, appR, appB, "Attachment:\tp0.bmp|tp1.bmp|tp2.bmp|tp3.bmp|tp4.bmp|tp5.bmp", 0, 0.8)
+    XY = Split(iCoord, "|")
+    If XY(0) > 0 and XY(1) > 0 Then 
+        MoveTo XY(0)+randnumber, XY(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+        Delay StringDelay
+
+        FindPic appL, appT, appR, appB, "Attachment:\attack.bmp", 0.4, intX, intY
+        If intX > 0 And intY > 0 Then 
+            Call showTips("进攻按钮坐标: " & intX & "," & intY)
+            MoveTo intX+randnumber, intY+10+randnumber
+            Delay StringDelay
+            LeftClick 1
+            jjnum = jjnum + 1
+        End If
+    End If
+End Sub
+// 之前的顺序打结界
+Sub jjorder()
+    Select Case jjnum
+    Case 1
+        MoveTo 260 + appL+randnumber, 176 + appT+randnumber
+    Case 2
+        MoveTo 575 + appL+randnumber, 176 + appT+randnumber
+    Case 3
+        MoveTo 872 + appL+randnumber, 176 + appT+randnumber
+    Case 4
+        MoveTo 260 + appL+randnumber, 300 + appT+randnumber
+    Case 5
+        MoveTo 575 + appL+randnumber, 300 + appT+randnumber
+    Case 6
+        MoveTo 872 + appL+randnumber, 300 + appT+randnumber
+    Case 7
+        MoveTo 260 + appL+randnumber, 420 + appT+randnumber
+    Case 8
+        MoveTo 575 + appL+randnumber, 420 + appT+randnumber
+    Case 9
+        MoveTo 872 + appL+randnumber, 420 + appT+randnumber
+    End Select
+    Delay StringDelay
+    LeftClick 1
+    // 进攻按钮
+    Delay StringDelay
+    FindColor appL, appT, appR, appB, "5EB2F3", intX, intY
+    If intX > 0 And intY > 0 Then 
+        TracePrint "进攻按钮坐标: " & intX & "," & intY
+        MoveTo intX+randnumber, intY+10+randnumber
+        Delay StringDelay
+        LeftClick 1
+        jjnum = jjnum + 1
+    End If
+End Sub
+
+// 状态加成buff状态, True-running, False-paused
+Dim yhstatus
+Dim jxstatus
+Dim jy50status
+DIm jy100status
+// 按钮的X位置相同
+buffx = 790
+Dim yhbuff '御魂buff按钮
+Dim jxbuff
+Dim jy50buff
+Dim jy100buff
+Dim buffinited
+buffinited = False
+// 记录当前登录的buff状态
+// 时间5000
+Sub initBuffStatus()
+    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.8, x, y
+    If x > 0 And y > 0 Then
+        MoveTo x+randnumber, y+randnumber
+        Delay StringDelay
+        LeftClick 1
+        Delay StringDelay
+        // 找色 00B5EB running
+        // 找色 0218E1 paused
+        // 找色 x: 440
+        // buff position
+        offset = -20
+
+        FindPic appL, appT, appR, appB, "Attachment:\yhbuff.bmp", 0.8, intx1, inty1
+        If intx1 > 0 And inty1 > 0 Then 
+            yhbuff = inty1 + offset
+            
+            x1 = 420 + appL+randnumber
+            y1 = inty1
+            x2 = 470 + appL+randnumber
+            y2 = inty1 + 30
+            //TracePrint x1 & "|" & y1 & "|" & x2 & "|" & y2
+            
+            FindColor x1, y1, x2, y2,"00B5EB",x,y
+            If x > 0 And y > 0 Then
+                yhstatus = True
+            End If
+            FindColor x1, y1, x2, y2,"0218E1",x2,y2
+            If x2 > 0 And y2 > 0 Then
+                yhstatus = False
+            End If
+        End If
+        // juexing buff 
+        FindPic appL, appT, appR, appB, "Attachment:\jxbuff.bmp", 0.8, intx2, inty2
+        If intx2 > 0 And inty2 > 0 Then 
+            jxbuff = inty2 + offset
+            x1 = 420 + appL+randnumber
+            y1 = inty2
+            x2 = 470 + appL+randnumber
+            y2 = inty2 + 30
+            //TracePrint x1 & "|" & y1 & "|" & x2 & "|" & y2
+            
+            FindColor x1, y1, x2, y2, "00B5EB",x3,y3
+            If x3 > 0 And y3 > 0 Then
+                jxstatus = True
+            End If
+            FindColor x1, y1, x2, y2,"0218E1",x4,y4
+            If x4> 0 And y4> 0 Then
+                jxstatus = False
+            End If
+        End If
+        FindPic appL, appT, appR, appB, "Attachment:\jy50.bmp", 0.9, intx3, inty3
+        If intx3 > 0 And inty3 > 0 Then
+            jy50buff = inty3 + offset
+            x1 = 420 + appL+randnumber
+            y1 = inty3
+            x2 = 470 + appL+randnumber
+            y2 = inty3 + 30
+            //TracePrint x1 & "|" & y1 & "|" & x2 & "|" & y2
+            FindColor x1, y1, x2, y2,"00B5EB",x5,y5
+            If x5> 0 And y5> 0 Then
+                jy50status = True
+            End If
+            FindColor x1, y1, x2, y2,"0218E1",x6,y6
+            If x6> 0 And y6> 0 Then
+                jy50status = False
+            End If
+        End If
+        FindPic appL, appT, appR, appB, "Attachment:\jy100.bmp", 0.9, intx4, inty4
+        If intx4 > 0 And inty4 > 0 Then
+            jy100buff = inty4 + offset
+            x1 = 420 + appL+randnumber
+            y1 = inty4
+            x2 = 470 + appL+randnumber
+            y2 = inty4 + 30
+            FindColor x1, y1, x2, y2,"00B5EB",x7,y7
+            If x7> 0 And y7> 0 Then
+                jy100status = True
+            End If
+            FindColor x1, y1, x2, y2,"0218E1",x8,y8
+            If x8> 0 And y8> 0 Then
+                jy100status = False
+            End If
+        End If
+        Call showTips("init buf status:" & jxstatus & " | " & yhstatus & " | " & jy50status & " | " & jy100status)
+        buffinited = True
+        MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+End Sub
+
+
+// 打开对应类型的buff
+// 2-觉醒 3-御魂 10-金币加成 50-经验50 100-经验100
+Sub addbuff(bufftype)
+    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.8, x, y
+    If x > 0 And y > 0 Then
+        MoveTo x+randnumber, y+randnumber
+        Delay StringDelay
+        LeftClick 1
+        Delay StringDelay
+        Call showTips("open buff:" & bufftype)
+        Select Case bufftype
+            Case 2
+                MoveTo buffx + appL, jxbuff + appT
+                Delay StringDelay
+                LeftClick 1
+                jxstatus = True
+            Case 3
+                MoveTo buffx + appL, yhbuff + appT
+                Delay StringDelay
+                LeftClick 1
+                yhstatus = True
+            Case 50
+                MoveTo buffx + appL, jy50buff + appT
+                Delay StringDelay
+                LeftClick 1
+                jy50status = True
+            Case 100
+                MoveTo buffx + appL, jy100buff + appT
+                Delay StringDelay
+                LeftClick 1
+                jy100status = True
+        End Select
+        Delay StringDelay
+        MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+End Sub
+// close buff 
+Sub closebuff(bufftype)
+    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.8, x, y
+    If x > 0 And y > 0 Then
+        MoveTo x+randnumber, y+randnumber
+        Delay StringDelay
+        LeftClick 1
+
+        Call showTips("close buff:" & bufftype)
+        Select Case bufftype
+            Case 2
+                MoveTo buffx + appL, jxbuff + appT
+                Delay StringDelay
+                LeftClick 1
+                jxstatus = False
+            Case 3
+                MoveTo buffx + appL, yhbuff + appT
+                Delay StringDelay
+                LeftClick 1
+                yhstatus = False
+            Case 50
+                MoveTo buffx + appL, jy50buff + appT
+                Delay StringDelay
+                LeftClick 1
+                jy50status = False
+            Case 100
+                MoveTo buffx + appL, jy100buff + appT
+                Delay StringDelay
+                LeftClick 1
+                jy100status = False
+        End Select
+        Delay StringDelay
+
+        MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+End Sub
+// 副本章节滚动4个副本
+Sub scrollfuben()
+    MouseWheel 1
+    Delay 100
+    MouseWheel 1
+    Delay 100
+    MouseWheel 1
+    Delay 100
+    MouseWheel 1
+    Delay 100
+    MouseWheel 1
+    Delay 100
+    MouseWheel 1
+    Delay 100
+    MouseWheel 1
+    Delay 1000
+End Sub
+
+// 暂停休息时间
+Sub restTime()
+    rtm = CInt(Main.resttime.Text)
+    Call showTips("运行1小时，休息" & rtm & "分钟")
+    Delay rtm * 60 * 1000 
+End Sub
+// ======================================
+Dim formerpage '前面那个页面是什么
+Dim formerMode '前面那个MODE是什么
+//
+// ========================================
+// 程序开始标记 start 
+// =========================================
+Rem appstart
+
+// 参数设定
+islock = False
+nowPage = -1
+Call jxinit()
+Call yhinit()
+fbselect = Main.fbselect.ListIndex
+maxbattle = Main.maxbattle.Text
+shiju = Main.shiju.Value
+xuanshang = Main.xuanshang.Value
+tupo = Main.tupo.Value
+gtupo = Main.gtupo.Value
+fuben = Main.fuben.Value
+juexing = Main.juexing.Value
+yuhun = Main.yuhun.Value
+dorest = Main.dorest.Value
+juqing = Main.juqing.Value
+
+
+// 判断运行时间
+runhours = CInt(Main.maxhour.Text)
+If runhours > 0 and Now - startTime >= runhours * 1000 * 60 * 60 Then 
+    Call showTips("超过设定时间，脚本停止运行")
+    // 停止执行脚本
+    ExitScript
+End If
+If dorest And Now - restmark > 1000 * 60 * 60 Then
+    Call restTime()
+    restmark = Now
+End If
+
+// Change MODE============================
+If MODE = 1 And fuben = False Then
+    MODE = 2
+End If
+If MODE = 2 And juexing = False Then
+    MODE = 3
+End If
+If MODE = 3 And yuhun = False Then
+    MODE = 5
+End If
+If MODE = 4 And tupo = False Then
+    MODE = 5
+End If
+If MODE = 5 And gtupo = False Then
+    MsgBox "没有打开寮突破"
+    ExitScript
+End If
+// loopcount
+// 超过用户设置最大战斗次数
+If MODE = 1 And fbmark > 50 Then
+    fbmark = 0
+    // 去觉醒
+     MODE = 2
+ElseIf MODE = 2 And jxmark > 50 Then 
+    jxmark = 0
+    // 御魂
+        MODE = 3
+Elseif MODE = 3 And yhmark > 50 Then
+    yhmark = 0
+    // 突破
+    MODE = 5
+End If
+If MODE = 5 And gtpmark = 6 Then
+    gtpmark = 0
+    MODE = 4
+End If
+// PC端限制的每日战斗次数
+If fbcount > 300 Then 
+    Main.fuben.Value = False
+    fuben = False
+End If
+If jxcount > 150 Then 
+    Main.juexing.Value = False
+    juexing = False
+End If
+If yhcount > 250 Then 
+    Main.yuhun.Value = False
+    yuhun = False
+End If
+If tpcount > 80 Then 
+    Main.tupo.Value = False
+    tupo = False
+End If
+If gtpcount > 100 Then 
+    Main.gtupo.Value = False
+    gtupo = False
+End If
+
+Delay StringDelay
+anyPos(0) = appR - 260
+anyPos(1) = appB - 200
+loopcount = loopcount + 1
+// 显示时间
+Main.time.Caption = Now
+
+// ===============================================
+// check界面处在哪个页面 nowPage
+// ================================================
+Do
+    // 首页
+    FindPic appL, appT, appR, appB, "Attachment:\home_icon.bmp", 0.8, intX, intY
+    If intX > 0 And intY > 0 Then 
+        nowPage = 0
+
+        // 剧情页面
+        iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\skip.bmp|000.bmp|skip2.bmp|quick.bmp", 0, 0.8)   
+        XY = Split(iCoord, "|")
+        If XY(0) > 0 And XY(1) > 0 Then 
+            Call showTips("has skip btn") 
+            skipbtn(0) = XY(0)
+            skipbtn(1) = XY(1)
+            nowPage = 200
+        End If
+
+        Goto check_end
+    End If
+    // 探索界面
+    FindPic appL,appT,appR,appB,"Attachment:\fuben_back.bmp",0.8,intX,intY
+    If intX > 0 And intY > 0 Then 
+        backbtn(0) = intX
+        backbtn(1) = intY
+        // 判断是否有副本title图
+        FindPic appL,appT,appR,appB,"Attachment:\yao.bmp",0.9,tx,ty
+        If tx > 0 And ty > 0 Then 
+            // 判断是否有副本章节
+            nowPage = 1
+
+            // 检测妖气
+            If shiju Then
+                iCoord = Plugin.Pic.FindMultiPic(yq(0), yq(1), yq(2), yq(3), "Attachment:\nianshou.bmp|sj_side.bmp|baoxiang.bmp|yaoqi.bmp", 0, 0.7)
+                XY = Split(iCoord, "|")
+                If XY(0) > 0 and XY(1) > 0 Then 
+                    sjbtn(0) = XY(0)
+                    sjbtn(1) = XY(1) - 20
+                    nowPage = 100
+                    Goto check_end
+                End If
+            End If
+
+            // 检测是否出现石距
+            If shiju Then 
+                FindPic appL,appT,appR,appB, "Attachment:\shiju_show.bmp", 0.7, intX, intY
+                If intX > 0 and intY > 0 Then 
+                    // show shiju 
+                    Call showTips("石距出现" & intX & "," & intY)
+                    nowPage = 100
+                    sjbtn(0) = intX
+                    sjbtn(1) = intY
+                    Goto check_end
+                End If
+                
+            End If
+        Else 
+            nowPage = 2
+        End If
+        Goto check_end
+    Else 
+        // 战斗中
+        FindPic appL,appT,appR,appB,"Attachment:\back.bmp",0.8,intX,intY
+        If intX > 0 And intY > 0 Then 
+            nowPage = 3
+            // ready interface
+            FindPic appL,appT,appR,appB,"Attachment:\ready.bmp",0.8,intX,intY
+            If intX > 0 And intY > 0 Then 
+                nowPage = 31
+            End If
+            Goto check_end
+        Else 
+            // 胜利
+            FindPic appL,appT,appR,appB,"Attachment:\win.bmp",0.8,intX,intY
+            If intX > 0 And intY > 0 Then 
+                anyPos(0) = intX
+                anyPos(1) = intY
+                nowPage = 41
+                Goto check_end
+            End If
+            // 失败
+            FindPic appL,appT,appR,appB,"Attachment:\fail.bmp",0.8,intX,intY
+            If intX > 0 And intY > 0 Then 
+                anyPos(0) = intX
+                anyPos(1) = intY
+                nowPage = 42
+                Goto check_end
+            End If
+            // 战斗结算
+            iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\gift.bmp|gift_new.bmp", 0, 0.7)   
+            XY = Split(iCoord, "|")
+            If XY(0) > 0 and XY(1) > 0 Then 
+                anyPos(0) = XY(0)
+                anyPos(1) = XY(1)
+                nowPage = 43
+                Goto check_end
+            End If
+        End If
+    End If
+    // 挑战界面,有组队挑战的点击按钮
+    FindPic appL,appT,appR,appB, "Attachment:\group.bmp", 0.3, intX, intY
+    If intX > 0 and intY > 0 Then 
+        // show shiju 
+        Call showTips("准备组队界面")
+        nowPage = 100
+        sjbtn(0) = intX
+        sjbtn(1) = intY
+        Goto check_end
+    End If
+    // 等待队友，组队挑战界面
+    FindPic appL,appT,appR,appB, "Attachment:\group_title.bmp", 0.5, intX, intY
+    If intX > 0 and intY > 0 Then 
+        // show shiju 
+        Call showTips("等待组队界面")
+        nowPage = 50
+        Goto check_end
+    End If
+    // 创建组队界面，考虑下等级设定？
+    FindPic appL,appT,appR,appB, "Attachment:\create.bmp", 0.5, intX, intY
+    If intX > 0 and intY > 0 Then 
+        // show shiju 
+        Call showTips("创建组队")
+        nowPage = 50
+        Goto check_end
+    End If
+    
+    // 看屏幕有没有关闭的按钮
+    FindPic appL,appT,appR,appB, "Attachment:\close.bmp", 0.5, intX, intY
+    If intX > 0 and intY > 0 Then 
+        //Call showTips("has close btn_" & intX & "," & intY) 
+        closebtn(0) = intX + 10
+        closebtn(1) = intY + 10
+        // 突破界面
+        FindPic appL,appT,appR,appB, "Attachment:\yyltp.bmp", 0.7, x, y
+        If x > 0 and y > 0 Then 
+            FindPic appL,appT,appR,appB, "Attachment:\personal.bmp", 0.7, x, y
+            If x > 0 and y > 0 Then 
+                nowPage = 12
+            Else 
+                nowPage = 11
+            End If
+            Goto check_end
+        Else 
+            // 觉醒或御魂
+            FindPic appL,appT,appR,appB, "Attachment:\jxtitle.bmp", 0.7, x, y
+            If x > 0 and y > 0 Then 
+                nowPage = 30
+                Goto check_end
+            Else 
+                FindPic appL,appT,appR,appB, "Attachment:\yhtitle.bmp", 0.7, x, y
+                If x > 0 and y > 0 Then 
+                    nowPage = 40
+                    Goto check_end
+                End If
+            End If
+        End If
+        // 是否有探索按钮，有就是进入副本界面
+        FindPic appL, appT, appR, appB, "Attachment:\tsbtn.bmp", 0.8, intX, intY
+        If intX > 0 And intY > 0 Then 
+            nowPage = 20
+            Goto check_end
+        End If
+    End If
+    // 战斗中不足
+    // 体力不足的购买界面
+    FindPic appL, appT, appR, appB, "Attachment:\buytili.bmp", 0.8, intX, intY
+    If intX > 0 And intY > 0 Then 
+        nowPage = 120 
+        Call showTips("体力不足，停止战斗" & intX & "," & intY)
+    End If
+
+    Rem check_end
+    Exit Do
+Loop
+
+Call showTips("当前页面:" & nowPage & "|MODE=" & MODE)
+
+
+
+// 一个很大的分支
+// 主程序=================================
+// 根据当前页面选择不同的处理方式
+// 当前页面所处位置
+Select Case nowPage
+Case 0
+    searchTimes = 0
+    // 看看有没有东西领
+    Rem gift_check
+    iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\gouyu.bmp|tili_icon.bmp|sign_in.bmp|letter.bmp|allletter.bmp|queren.bmp", 0, 0.5)   
+    XY = Split(iCoord, "|")
+    If XY(0) > 0 And XY(1) > 0 Then 
+        MoveTo XY(0) + 5+randnumber, XY(1) + 5+randnumber
+        Delay 1000
+        LeftClick 1
+        Delay StringDelay
+        MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+        Goto gift_check
+    End If
+
+    FindPic appL,appT,appR,appB,"Attachment:\lamp.bmp",0.6,intX,intY
+    // 点击进入探索界面
+    If intX > 0 And intY > 0 Then
+        MoveTo intX+randnumber, intY+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+    
+Case 10
+    MoveTo skipbtn(0)+randnumber, skipbtn(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
+Case 50
+    FindColor appL,appT,appR,appB,"5EB2F3",intX,intY
+    If intX > 0 And intY > 0 Then 
+        // 可以点击开始了
+        MoveTo intX, intY
+        Delay StringDelay
+        LeftClick 1
+    End If
+Case 100
+    // 打石距
+    MoveTo sjbtn(0)+randnumber, sjbtn(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
+Case 120
+    // 体力不足，去打突破
+    MODE = 4
+    MoveTo tlclose(0)+randnumber, tlclose(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
+Case 1
+    // ==========================================================
+    // 探索大地图界面
+    // 需要根据当前模式判断是去点击刷副本还是刷觉醒御魂啥的
+    // ==========================================================
+    // 首先确定一下buff状态
+    If buffinited = False Then
+        // sub 不用延迟
+        Call initBuffStatus()
+        // 确认一下status
+        Delay 5000
+    End If
+    // 如果变换了MODE，那么要关闭加成
+    // 0-大地图待命 1-副本 2-觉醒 3-御魂 4-突破 5-寮突破
+    If buffinited And Not formerMode = MODE Then
+        // 检查buff状态
+        Call initBuffStatus()
+        Select Case formerMode
+            Case 1
+                If jy100buff > 0 And jy100status = True Then
+                    Call closebuff(100)
+                End If
+                If jy50buff > 0 And jy50status = True Then
+                    Call closebuff(50)
+                End If
+            Case 2
+                If jxbuff > 0 And jxstatus = True Then
+                    Call closebuff(2)
+                End If
+            Case 3
+                If yhbuff > 0 And yhstatus = True Then
+                    Call closebuff(3)
+                End If
+        End Select
+        formerMode = MODE
+    End If
+
+    // 判断当前模式是啥
+    Select Case MODE
+    Case 1
+        // 如果要加成，则打开加成先
+        If Main.jy50buff.Value And jy50status = False And jy50buff > 0 Then
+            Call addbuff(50)
+        End If
+        If Main.jy100buff.Value And jy100status = False And jy100buff > 0 Then
+            Call addbuff(100)
+        End If
+        // ========================================
+        // 刷副本
+        // 点击右侧副本入口
+        If fbselect > -1 Then 
+            pos = fbselect
+            // 刷副本经常会被外挂，所以考虑增加随机浮动？
+            If fbtimes Mod 5 = 3 Then
+                Call showTips("防重复副本进入，点进上一个副本")
+                pos = pos + 1
+            End If
+            // 增加浮动END
+            If pos > 3 Then 
+                pos = fbselect Mod 4
+            End If
+            
+            MoveTo lastPos(0)+randnumber, lastPos(1)+randnumber - chgap * pos 
+            Delay StringDelay
+            // 第一落在第18章
+            If fbselect > 3 Then 
+                Call scrollfuben()
+            End If
+            // 最小14章
+            If fbselect > 7 Then
+                Call scrollfuben()
+            End If
+            // 10
+            If fbselect > 11 Then
+                Call scrollfuben()
+            End If
+            // 6
+            If fbselect > 15 Then
+                Call scrollfuben()
+            End If
+            // 2
+            If fbselect > 19 Then
+                Call scrollfuben()
+            End If
+        End If
+        Delay StringDelay
+        LeftClick 1
+    Case 2
+        // 刷个人觉醒
+        If Main.jxbuff.Value And jxstatus = False And jxbuff > 0 Then
+            Call addbuff(2)
+        End If
+        // 点击觉醒入口
+        MoveTo jxbtn(0)+randnumber, jxbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+        // 选择材料入口
+        Delay StringDelay
+        MoveTo appL + jxselect+randnumber, 300 + appT+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Case 3
+        // 刷个人御魂
+        If Main.yhbuff.Value And yhstatus = False And yhbuff > 0 Then
+            Call addbuff(3)
+        End If
+        // 点击御魂入口
+        MoveTo yhbtn(0)+randnumber, yhbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+        Delay StringDelay
+        MoveTo yhselect, 340 + appT+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Case 4
+        // 刷个人结界突破
+        // 点击突破入口
+        MoveTo jjbtn(0)+randnumber, jjbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Case 5
+        MoveTo jjbtn(0)+randnumber, jjbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Case Else
+        // 否则
+    End Select
+    searchTimes = 0
+Case 2
+    If MODE <> 1 Or fuben = False Or fbsearch > 10 Then
+        // 退出
+        MoveTo backbtn(0)+randnumber, backbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+        Delay 1000
+        // 还要点确认按钮
+        FindPic appL,appT,appR,appB,"Attachment:\queren.bmp",0.7,intX,intY
+        If intX > 0 And intY > 0 Then 
+            MoveTo intX+10+randnumber, intY+10+randnumber
+            Delay StringDelay
+            LeftClick 1
+        End If
+        // End
+        Goto action_end
+    End If
+    searchTimes = searchTimes + 1
+    Call showTips("寻找战斗...")
+    // 尝试用boss区域找色寻找boss
+    FindColor 400+appL,170+appT,700+appL,appB-50,"2422A4",intX,intY
+    If intX > 0 And intY > 0 Then 
+        Call showTips("boss出现...")
+        MoveTo intX+randnumber, intY+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Else 
+        // 小怪、boss图
+        iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\fb_g.bmp|fb-boss.bmp|boss.bmp", 0, 0.5)   
+        XY = Split(iCoord, "|")
+        If XY(0) > 0 And XY(1) > 0 Then 
+            MoveTo XY(0) + 10+randnumber, XY(1) + 10+randnumber
+            Delay 500
+            LeftClick 1
+        Else 
+            // 小纸人宝箱
+            FindPic appL,appT,appR,appB,"Attachment:\zhiren_box.bmp",0.5,intX,intY
+            If intX > 0 And intY > 0 Then 
+                MoveTo intX + 10+randnumber, intY + 10+randnumber
+                Delay StringDelay
+                LeftClick 1
+                // 小纸人宝箱会弹出战利品，点击屏幕退出
+                Delay 1000
+                MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+                Delay StringDelay
+                LeftClick 1
+            Else 
+                // 小怪和boss都没找到，但副本没退出，说明小怪大概在看不见的地方
+                // 为保证寻找容错，寻找1次后开始执行
+                If searchTimes > 1 Then 
+                    searchTimes = 0
+                    fbsearch = fbsearch + 1
+                    // 单击阴阳师向右侧移动
+                    Call dragmove(appR - 80, appB - 180, appL + 80, appB - 180, 2000, 5)
+                    Delay 3000
+                End If
+            End If
+        End If
+    End If
+Case 3
+    searchTimes = 0
+    Call randomclick()
+Case 31
+    // 31-准备界面
+    Call showTips("在准备界面")
+    // 考虑检测狗粮
+    MoveTo readyBtn(0)+randnumber, readyBtn(1)+randnumber
+    Delay 1000
+    LeftClick 1
+Case 41
+    // 前置战斗中才计算次数
+    If formerpage = 3 Then 
+        btimes = btimes + 1
+        Call countMark(1)
+    End If
+    // success
+    searchTimes = 0
+    
+    MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
+Case 42
+    // 前置战斗中才计算次数
+    If formerpage = 3 Then 
+        btimes = btimes + 1
+        Call countMark(0)
+    End If
+    // fail
+    searchTimes = 0
+    MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
+Case 43
+    // 前置战斗中才计算次数
+    If formerpage = 3 Then 
+        btimes = btimes + 1
+        Call countMark(1)
+    End If
+    MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
+Case 11
+    // 了突破
+    // gtupo
+    If MODE = 5 and gtupo Then 
+        FindPic appL, appT, appR, appB, "Attachment:\gtp_over.bmp", 1, intX, intY
+        If intX > 0 And intY > 0 Then 
+            Call showTips("没有挑战次数了")
+            gtpmark = 0
+            MODE = 4
+        Else
+            MoveTo jj1(0)+randnumber, jj1(1)+randnumber
+            Delay StringDelay
+            Call scrollfuben()
+            Delay StringDelay
+            Call scrollfuben()
+            Delay StringDelay
+            LeftClick 1
+            Delay StringDelay
+            // attack
+            FindPic appL, appT, appR, appB, "Attachment:\attack.bmp", 0.4, intX, intY
+            If intX > 0 And intY > 0 Then 
+                Call showTips("进攻按钮坐标: " & intX & "," & intY)
+                MoveTo intX+randnumber, intY+10+randnumber
+                Delay StringDelay
+                LeftClick 1
+            End If
+        End If
+        
+    Else 
+        // 点击关闭
+        MoveTo tupoclose(0)+randnumber, tupoclose(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+Case 12
+    // 判断mode
+    // 去寮突破
+    If MODE = 5 Then 
+        MoveTo gtpbtn(0)+randnumber, gtpbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    ElseIf MODE = 4 and tupo Then '个人突破
+        // 判断是否有结界挑战券，如果没有就不执行了
+        FindPic appL, appT, appR, appB, "Attachment:\jj_not.bmp", 1, intX, intY
+        If intX > 0 and intY > 0 Then 
+            // 没有结界挑战券了
+            Call showTips("没有结界挑战券了")
+            jjnum = 0
+            // 没有挑战券就然后去刷副本
+            MODE = 1
+            Goto action_end
+        End If
+        // 如果是重新开始，那么先刷新界面
+        If jjnum = 0 Then 
+            // 点击刷新
+            FindColor rebtn(0),rebtn(1),rebtn(0) + 10,rebtn(1) + 10,"5EB2F3",intX,intY
+            If intX > 0 And intY > 0 Then 
+                // 刷新可以点击
+                MoveTo intX+randnumber, intY+randnumber
+                Delay StringDelay
+                LeftClick 1
+                // 点击确认
+                Delay StringDelay
+                FindPic appL,appT,appR,appB,"Attachment:\sure.bmp",0.8,intX,intY
+                If intX > 0 And intY > 0 Then 
+                    Call showTips("点击确认")
+                    MoveTo intX, intY
+                    Delay StringDelay
+                    LeftClick 1
+                    jjnum = 1
+                End If
+            Else 
+                // 刷新CD中
+                Call showTips("刷新CD中.")
+            End If
+        ElseIf jjnum < 10 and jjnum > 0 Then 
+            Call jjattack()
+        Else 
+            // 突破了9次，需要重新开始
+            jjnum = 0
+        End If
+    Else 
+        // 关闭突破界面
+        MoveTo tupoclose(0)+randnumber, tupoclose(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+Case 20
+    // 进入副本前的挑战界面
+    If MODE = 1 And fuben Then 
+        // 弹出的副本窗口
+        MoveTo enterBtn(0)+randnumber, enterBtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+        fbtimes = fbtimes + 1
+        fbsearch = 0
+    Else
+        MoveTo closebtn(0)+randnumber, closebtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+Case 30
+    // 觉醒，点击挑战
+    // 点击开始挑战
+    If MODE = 2 and juexing Then 
+        MoveTo tzbtn(0)+randnumber, tzbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Else 
+        MoveTo closebtn(0)+randnumber, closebtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+Case 40
+    // 御魂，点击挑战
+    // 点击开始挑战
+    If MODE = 3 and yuhun Then 
+        MoveTo tzbtn(0)+randnumber, tzbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Else 
+        MoveTo closebtn(0)+randnumber, closebtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+Case Else
+    //否则
+End Select
+
+// 动作结束
+Rem action_end
+
+// 悬赏封印
+FindPic appL,appT,appR,appB,"Attachment:\xuanshang.bmp",0.8,intX,intY
+If intX > 0 And intY > 0 Then 
+    If xuanshang = False Then
+        Call showTips("finding deny")
+        FindPic appL,appT,appR,appB,"Attachment:\deny.bmp",0.5,intX,intY
+        If intX > 0 And intY > 0 Then 
+            Call showTips("deny invite")
+            MoveTo intX, intY
+            Delay StringDelay
+            LeftClick 1
+        End If
+    Else
+        Call showTips("finding accept")
+        FindPic appL,appT,appR,appB,"Attachment:\accept.bmp",0.5,intX,intY
+        If intX > 0 And intY > 0 Then 
+            Call showTips("accept invite")
+            MoveTo intX, intY
+            Delay StringDelay
+            LeftClick 1
+        End If
+    End If
+End If
+
+If nowPage > -1 Then
+    formerpage = nowPage
+End If
+
+
+If btimes > maxBattle Then 
+    // 设置为待机模式
+    MODE = 0
+    btimes = 0
+    //ExitScript
+End If
+
+Call updateaction()
+Delay StringDelay
+Goto appstart
