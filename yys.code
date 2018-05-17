@@ -393,30 +393,6 @@ Sub dragmove(x1, y1, x2, y2, time, phd)
     LeftUp 1
 End Sub
 
-// 打结界 doesnt work
-Sub jjattack()
-    // pic doesnt work
-    iCoord = Plugin.Pic.FindMultiPic(appL, appT, appR, appB, "Attachment:\tp0.bmp|tp1.bmp|tp2.bmp|tp3.bmp|tp4.bmp|tp5.bmp", 0, 0.8)
-    XY = Split(iCoord, "|")
-    If XY(0) > 0 and XY(1) > 0 Then 
-        MoveTo XY(0)+randnumber, XY(1)+randnumber
-        Delay StringDelay
-        LeftClick 1
-        Delay StringDelay
-
-        FindPic appL, appT, appR, appB, "Attachment:\attack.bmp", 0.4, intX, intY
-        If intX > 0 And intY > 0 Then 
-            Call showTips("进攻按钮坐标: " & intX & "," & intY)
-            MoveTo intX+randnumber, intY+10+randnumber
-            Delay StringDelay
-            LeftClick 1
-            jjnum = jjnum + 1
-        End If
-    End If
-    FindColor 0,0,1366,768,"8DA2B3",intX,intY
-    If intX> 0 And intY> 0 Then
-    End If
-End Sub
 // 之前的顺序打结界
 Sub jjorder()
     Select Case jjnum
