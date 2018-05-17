@@ -39,6 +39,17 @@ yhcount = Main.yhcount.Text
 Event Main.LoadOver
     // nothing
 End Event
+// 启动按钮
+Event Main.start.Click
+    If Main.start.Caption = "启动" Then
+        KeyPress "F10", 1
+        Main.start.Caption = "停止"
+    Else
+        KeyPress "F12", 1
+        Main.start.Caption = "启动"
+    End If
+End Event
+
 // 初始进行结界突破
 MODE = Main.mode.ListIndex
 Event Main.mode.SelectChange
@@ -245,7 +256,7 @@ tlclose(0) = 830 + appL
 tlclose(1) = 175 + appT
 // 左侧妖气怪范围
 Dim yq(3)
-yq(0) = 110 + appL
+yq(0) = 10 + appL
 yq(1) = 130 + appT
 yq(2) = 110 + appL
 yq(3) = 550 + appT
@@ -276,8 +287,8 @@ yq(3) = 550 + appT
 // 120 - 体力不足界面
 // 130 - 经验满了的界面
 // 150 - 有进攻按钮的界面
-Dim nowPage
-nowPage = 0
+Global nowPage
+nowPage = -1
 // 运行小时
 Dim runhours
 Dim startTime
@@ -382,8 +393,9 @@ Sub dragmove(x1, y1, x2, y2, time, phd)
     LeftUp 1
 End Sub
 
-// 打结界
+// 打结界 doesnt work
 Sub jjattack()
+    // pic doesnt work
     iCoord = Plugin.Pic.FindMultiPic(appL, appT, appR, appB, "Attachment:\tp0.bmp|tp1.bmp|tp2.bmp|tp3.bmp|tp4.bmp|tp5.bmp", 0, 0.8)
     XY = Split(iCoord, "|")
     If XY(0) > 0 and XY(1) > 0 Then 
@@ -400,6 +412,9 @@ Sub jjattack()
             LeftClick 1
             jjnum = jjnum + 1
         End If
+    End If
+    FindColor 0,0,1366,768,"8DA2B3",intX,intY
+    If intX> 0 And intY> 0 Then
     End If
 End Sub
 // 之前的顺序打结界
@@ -760,7 +775,7 @@ Do
         nowPage = 0
 
         // 剧情页面
-        iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\skip.bmp|000.bmp|skip2.bmp|quick.bmp", 0, 0.8)   
+        iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\skip.bmp|000.bmp|skip2.bmp|quick.bmp", 0, 0.5)   
         XY = Split(iCoord, "|")
         If XY(0) > 0 And XY(1) > 0 Then 
             Call showTips("has skip btn") 
@@ -777,7 +792,7 @@ Do
         backbtn(0) = intX
         backbtn(1) = intY
         // 判断是否有副本title图
-        FindPic appL,appT,appR,appB,"Attachment:\yao.bmp",0.9,tx,ty
+        FindPic appL,appT,appR,appB,"Attachment:\yao.bmp",0.8,tx,ty
         If tx > 0 And ty > 0 Then 
             // 判断是否有副本章节
             nowPage = 1
@@ -794,19 +809,6 @@ Do
                 End If
             End If
 
-            // 检测是否出现石距
-            If shiju Then 
-                FindPic appL,appT,appR,appB, "Attachment:\shiju_show.bmp", 0.7, intX, intY
-                If intX > 0 and intY > 0 Then 
-                    // show shiju 
-                    Call showTips("石距出现" & intX & "," & intY)
-                    nowPage = 100
-                    sjbtn(0) = intX
-                    sjbtn(1) = intY
-                    Goto check_end
-                End If
-                
-            End If
         Else 
             nowPage = 2
         End If
@@ -884,9 +886,9 @@ Do
         closebtn(0) = intX + 10
         closebtn(1) = intY + 10
         // 突破界面
-        FindPic appL,appT,appR,appB, "Attachment:\yyltp.bmp", 0.7, x, y
+        FindPic appL,appT,appR,appB, "Attachment:\yyltp.bmp", 0.3, x, y
         If x > 0 and y > 0 Then 
-            FindPic appL,appT,appR,appB, "Attachment:\personal.bmp", 0.7, x, y
+            FindPic appL,appT,appR,appB, "Attachment:\personal.bmp", 0.3, x, y
             If x > 0 and y > 0 Then 
                 nowPage = 12
             Else 
@@ -895,12 +897,12 @@ Do
             Goto check_end
         Else 
             // 觉醒或御魂
-            FindPic appL,appT,appR,appB, "Attachment:\jxtitle.bmp", 0.7, x, y
+            FindPic appL,appT,appR,appB, "Attachment:\jxtitle.bmp", 0.5, x, y
             If x > 0 and y > 0 Then 
                 nowPage = 30
                 Goto check_end
             Else 
-                FindPic appL,appT,appR,appB, "Attachment:\yhtitle.bmp", 0.7, x, y
+                FindPic appL,appT,appR,appB, "Attachment:\yhtitle.bmp", 0.5, x, y
                 If x > 0 and y > 0 Then 
                     nowPage = 40
                     Goto check_end
@@ -921,14 +923,13 @@ Do
         nowPage = 120 
         Call showTips("体力不足，停止战斗" & intX & "," & intY)
     End If
+    
 
     Rem check_end
     Exit Do
 Loop
 
-Call showTips("当前页面:" & nowPage & "|MODE=" & MODE)
-
-
+Call showTips("当前页面:" & nowPage & "|  MODE=" & MODE)
 
 // 一个很大的分支
 // 主程序=================================
@@ -1273,10 +1274,10 @@ Case 12
                 LeftClick 1
                 // 点击确认
                 Delay StringDelay
-                FindPic appL,appT,appR,appB,"Attachment:\sure.bmp",0.8,intX,intY
-                If intX > 0 And intY > 0 Then 
+                FindColor appL,appT,appR,appB,"5EB2F3",intX,intY
+                If intX> 0 And intY> 0 Then
                     Call showTips("点击确认")
-                    MoveTo intX, intY
+                    MoveTo intX+20+randnumber, intY+10+randnumber
                     Delay StringDelay
                     LeftClick 1
                     jjnum = 1
@@ -1286,7 +1287,7 @@ Case 12
                 Call showTips("刷新CD中.")
             End If
         ElseIf jjnum < 10 and jjnum > 0 Then 
-            Call jjattack()
+            Call jjorder()
         Else 
             // 突破了9次，需要重新开始
             jjnum = 0
