@@ -27,11 +27,11 @@ Global jxcount
 Global fbcount
 Global yhcount
 // init count
-tpcount = Main.tpcount.Text
-gtpcount = Main.gtpcount.Text
-jxcount = Main.jxcount.Text
-fbcount = Main.fbcount.Text
-yhcount = Main.yhcount.Text
+tpcount = CInt(Main.tpcount.Caption)
+gtpcount = CInt(Main.gtpcount.Caption)
+jxcount = CInt(Main.jxcount.Caption)
+fbcount = CInt(Main.fbcount.Caption)
+yhcount = CInt(Main.yhcount.Caption)
 
 // ====================================================================================
 // 程序界面事件处理
@@ -49,13 +49,23 @@ Event Main.start.Click
         Main.start.Caption = "启动"
     End If
 End Event
+Event Main.clearlog.Click
+    Main.logtext.Text = ""
+End Event
 
 // 初始进行结界突破
 MODE = Main.mode.ListIndex
 Event Main.mode.SelectChange
     MODE = Main.mode.ListIndex
-    Call showTips("Change MODE:" & MODE)
+    Call showTips("战斗模式改变--->" & MODE)
 End Event
+// 关机
+Sub shutdown()
+    Dim Obj
+    set Obj = createobject("WScript.Shell")
+    Obj.Run "shutdown /f /s /t 0"
+    //调用shutdown命令。 /f--强行关闭应用程序而不提醒， /s--关闭计算机（要重启的话，请把这改成/r[重启计算机]），/t time--在time秒后前闭计算机。
+End Sub
 // action
 Function updateaction()
     Select Case MODE
@@ -86,10 +96,18 @@ End Function
 // 屏幕显示提示
 Function showTips(txt)
     Main.tips.Caption = txt 
-    ' Call Plugin.Msg.HideScrTXT()
-    ' Delay 500
-    ' Call Plugin.Msg.ShowScrTXT(appL, appT-30, 1024, 100, txt, "0000FF")
+    If logtext = txt Then
+    Else
+        logtext = txt
+        Call savelog
+    End If
 End Function
+
+Dim logtext
+Sub savelog
+    logtext = Time & "   " & logtext
+    Main.logtext.Text = Main.logtext.Text & logtext & vbCrLf
+End Sub
 // 随机点击屏幕
 Sub randomclick()
     btop = 100
@@ -100,7 +118,7 @@ Sub randomclick()
     x = Round((appR -bright - appL - bleft) * Rnd + appL + bleft)
     y = Round((appB - bbottom - appT  - btop) * Rnd + appT + btop)
     MoveTo x, y 
-    Delay StringDelay
+    Delay 1000
     LeftClick 1
 End Sub
 Sub OnScriptExit()'脚本停止事件
@@ -290,7 +308,7 @@ yq(3) = 550 + appT
 Global nowPage
 nowPage = -1
 // 运行小时
-Dim runhours
+Dim maxhours
 Dim startTime
 startTime = Now
 // 上次休息时间
@@ -495,7 +513,7 @@ Sub initBuffStatus()
                 jxstatus = False
             End If
         End If
-        FindPic appL, appT, appR, appB, "Attachment:\jy50.bmp", 0.9, intx3, inty3
+        FindPic appL, appT, appR, appB, "Attachment:\jy50.bmp", 0.8, intx3, inty3
         If intx3 > 0 And inty3 > 0 Then
             jy50buff = inty3 + offset
             x1 = 420 + appL+randnumber
@@ -512,7 +530,7 @@ Sub initBuffStatus()
                 jy50status = False
             End If
         End If
-        FindPic appL, appT, appR, appB, "Attachment:\jy100.bmp", 0.9, intx4, inty4
+        FindPic appL, appT, appR, appB, "Attachment:\jy100.bmp", 0.8, intx4, inty4
         If intx4 > 0 And inty4 > 0 Then
             jy100buff = inty4 + offset
             x1 = 420 + appL+randnumber
@@ -528,7 +546,7 @@ Sub initBuffStatus()
                 jy100status = False
             End If
         End If
-        Call showTips("init buf status:" & jxstatus & " | " & yhstatus & " | " & jy50status & " | " & jy100status)
+        Call showTips("init buff status:" & jxstatus & " | " & yhstatus & " | " & jy50status & " | " & jy100status)
         buffinited = True
         MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
         Delay StringDelay
@@ -630,12 +648,88 @@ Sub scrollfuben()
     MouseWheel 1
     Delay 1000
 End Sub
+// 阴阳寮结界突破滚动一屏
+Sub scrolljj()
+    MouseWheel -1
+    Delay 100
+    MouseWheel -1
+    Delay 100
+    MouseWheel -1
+    Delay 100
+    MouseWheel -1
+    Delay 100
+    MouseWheel -1
+    Delay 100
+    MouseWheel -1
+    Delay 100
+    MouseWheel -1
+    Delay 1000
+End Sub
 
 // 暂停休息时间
 Sub restTime()
     rtm = CInt(Main.resttime.Text)
-    Call showTips("运行1小时，休息" & rtm & "分钟")
+    Call showTips("========= 运行1小时，休息" & rtm & "分钟 =========")
     Delay rtm * 60 * 1000 
+End Sub
+
+// 业原火挑战券的判断
+Dim yyh_can
+Sub yyhjudge()
+    yyh_can = True
+    // 当前消耗券位置
+    Dim yyhpos
+    // appL+700, appT+400, appL+760, appT+460
+    ttan=Plugin.Color.FindMutiColor(appL+700, appT+400, appL+760, appT+460, "E4AE56","2|0|00007E,6|0|5A9CA6,6|5|B9D0E1,3|7|131D1E",1)
+    arr = Split(ttan, "|")
+    ttanx = CInt(arr(0)): ttany = CInt(arr(1))
+    If ttanx > 0 And ttany > 0 Then
+        yyhpos = 1
+        Traceprint "xiaohaoquan is tan"
+    End If
+    chen=Plugin.Color.FindMutiColor(appL+700, appT+400, appL+760, appT+460, "1B9AD8","3|-1|1C98D4,7|-2|E5BCD6,14|0|8E4993,8|9|3A3D42,5|17|B4CEE1",1)
+    arr2 = Split(chen, "|")
+    chenx = CInt(arr2(0)): cheny = CInt(arr2(1))
+    If chenx > 0 And cheny > 0 Then
+        yyhpos = 2
+        Traceprint "xiaohaoquan is chen"
+    End If
+    chi=Plugin.Color.FindMutiColor(appL+700, appT+400, appL+760, appT+460,"066ED9","5|-4|46ACE9,9|-4|38B8E1,13|-4|BBD3E0,18|-4|1480B5,11|6|1D1B1A",1)
+    arr3 = Split(chi, "|")
+    chix = CInt(arr3(0)): chiy = CInt(arr3(1))
+    If chix > 0 And chiy > 0 Then
+        yyhpos = 3
+        Traceprint "xiaohaoquan is chi"
+    End If
+
+    // 消耗券数量
+    // tan 300~400
+    Select Case yyhpos
+    Case 1
+        XY=Plugin.Color.FindMutiColor(appL+300,appT,appL+400,appT+50,"B9CBD4","0|6|CBDDE4,-3|11|91A1AC,-4|-4|8697A5,-8|2|CCDEE5,-8|6|CBDEE4,-13|3|0F1D35,-16|4|0F1C34,-18|4|0F1C34,-13|-1|0F1E37,-15|-1|0F1E37,-16|3|0F1D35",1)
+        tmp = Split(XY, "|")
+        X = CInt(tmp(0)) : Y = CInt(tmp(1))
+        If X > 0 And Y > 0 Then 
+            Call showTips("没有贪的挑战券.")
+            yyh_can = False
+        End If
+    Case 2
+        XY=Plugin.Color.FindMutiColor(appL+480,appT,appL+580,appT+50,"B9CBD4","0|6|CBDDE4,-3|11|91A1AC,-4|-4|8697A5,-8|2|CCDEE5,-8|6|CBDEE4,-13|3|0F1D35,-16|4|0F1C34,-18|4|0F1C34,-13|-1|0F1E37,-15|-1|0F1E37,-16|3|0F1D35",1)
+        tmp = Split(XY, "|")
+        X = CInt(tmp(0)) : Y = CInt(tmp(1))
+        If X > 0 And Y > 0 Then 
+            Call showTips("没有嗔的挑战券.")
+            yyh_can = False
+        End If
+    Case 3
+        XY=Plugin.Color.FindMutiColor(appL+650,appT,appL+750,appT+50,"B9CBD4","0|6|CBDDE4,-3|11|91A1AC,-4|-4|8697A5,-8|2|CCDEE5,-8|6|CBDEE4,-13|3|0F1D35,-16|4|0F1C34,-18|4|0F1C34,-13|-1|0F1E37,-15|-1|0F1E37,-16|3|0F1D35",1)
+        tmp = Split(XY, "|")
+        X = CInt(tmp(0)) : Y = CInt(tmp(1))
+        If X > 0 And Y > 0 Then 
+            Call showTips("没有痴的挑战券.")
+            yyh_can = False
+        End If
+    End Select
 End Sub
 // ======================================
 Dim formerpage '前面那个页面是什么
@@ -665,13 +759,15 @@ juqing = Main.juqing.Value
 
 
 // 判断运行时间
-runhours = CInt(Main.maxhour.Text)
-If runhours > 0 and Now - startTime >= runhours * 1000 * 60 * 60 Then 
-    Call showTips("超过设定时间，脚本停止运行")
+runtime = DateDiff("s", startTime, Now)
+maxhours = CInt(Main.maxhour.Text)
+If maxhours > 0 And runtime >= maxhours * 60 * 60 Then 
+    Call showTips("超过设定时间，自动关机")
+    Call shutdown()
     // 停止执行脚本
     ExitScript
 End If
-If dorest And Now - restmark > 1000 * 60 * 60 Then
+If dorest And DateDiff("s", restmark, Now) > 60 * 60 Then
     Call restTime()
     restmark = Now
 End If
@@ -690,7 +786,7 @@ If MODE = 4 And tupo = False Then
     MODE = 5
 End If
 If MODE = 5 And gtupo = False Then
-    MsgBox "没有打开寮突破"
+    Call showTips("没有打开寮突破，脚本停止")
     ExitScript
 End If
 // loopcount
@@ -698,17 +794,18 @@ End If
 If MODE = 1 And fbmark > 50 Then
     fbmark = 0
     // 去觉醒
-     MODE = 2
+    MODE = 2
 ElseIf MODE = 2 And jxmark > 50 Then 
     jxmark = 0
     // 御魂
-        MODE = 3
+    MODE = 3
 Elseif MODE = 3 And yhmark > 50 Then
     yhmark = 0
     // 突破
     MODE = 5
 End If
 If MODE = 5 And gtpmark = 6 Then
+    Call showTips("寮突破成功满6次，去个人突破")
     gtpmark = 0
     MODE = 4
 End If
@@ -734,9 +831,8 @@ If gtpcount > 100 Then
     gtupo = False
 End If
 
-Delay StringDelay
-anyPos(0) = appR - 260
-anyPos(1) = appB - 200
+anyPos(0) = appR - 260 - randnumber
+anyPos(1) = appB - 160 - randnumber
 loopcount = loopcount + 1
 // 显示时间
 Main.time.Caption = Now
@@ -778,6 +874,7 @@ Do
                 iCoord = Plugin.Pic.FindMultiPic(yq(0), yq(1), yq(2), yq(3), "Attachment:\nianshou.bmp|sj_side.bmp|baoxiang.bmp|yaoqi.bmp", 0, 0.7)
                 XY = Split(iCoord, "|")
                 If XY(0) > 0 and XY(1) > 0 Then 
+                    Call showTips("发现石距/年兽/妖气封印副本/宝箱")
                     sjbtn(0) = XY(0)
                     sjbtn(1) = XY(1) - 20
                     nowPage = 100
@@ -829,7 +926,7 @@ Do
         End If
     End If
     // 挑战界面,有组队挑战的点击按钮
-    FindPic appL,appT,appR,appB, "Attachment:\group.bmp", 0.3, intX, intY
+    FindPic appL,appT,appR,appB, "Attachment:\group.bmp", 0.4, intX, intY
     If intX > 0 and intY > 0 Then 
         // show shiju 
         Call showTips("准备组队界面")
@@ -837,6 +934,17 @@ Do
         sjbtn(0) = intX
         sjbtn(1) = intY
         Goto check_end
+    Else
+        XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"40484C","-2|10|272C2F,7|10|343A3E,13|10|3A4145,13|14|252A2D",1)
+        tmp = Split(XY, "|")
+        X = CInt(tmp(0)): Y = CInt(tmp(1))
+        If X > 0 And Y > 0 Then
+            Call showTips("找到组队挑战按钮")
+            sjbtn(0) = X + 10
+            sjbtn(1) = Y + 20
+            nowPage = 100
+            Goto check_end
+        End If
     End If
     // 等待队友，组队挑战界面
     FindPic appL,appT,appR,appB, "Attachment:\group_title.bmp", 0.5, intX, intY
@@ -864,7 +972,7 @@ Do
         // 突破界面
         FindPic appL,appT,appR,appB, "Attachment:\yyltp.bmp", 0.3, x, y
         If x > 0 and y > 0 Then 
-            FindPic appL,appT,appR,appB, "Attachment:\personal.bmp", 0.3, x, y
+            FindPic appL,appT,appR,appB, "Attachment:\personal.bmp", 0.7, x, y
             If x > 0 and y > 0 Then 
                 nowPage = 12
             Else 
@@ -899,13 +1007,26 @@ Do
         nowPage = 120 
         Call showTips("体力不足，停止战斗" & intX & "," & intY)
     End If
+    // 经验满了
+    FindPic appL, appT, appR, appB, "Attachment:\tojj.bmp", 0.8, intX, intY
+    If intX > 0 And intY > 0 Then 
+        nowPage = 130 
+        Call showTips("经验壶满" & intX & "," & intY)
+        FindColor appL, appT, appR, appB,"5168DF",ix,iy
+        If ix> 0 And iy> 0 Then
+            anyPos(0) = ix + 30
+            anyPos(1) = iy + 10
+        End If
+    End If
     
-
     Rem check_end
     Exit Do
 Loop
 
-Call showTips("当前页面:" & nowPage & "|  MODE=" & MODE)
+If nowPage > 0 And formerpage <> nowPage Then
+    Call showTips("=======>当前:" & nowPage & " |  MODE=" & MODE & " | 已运行时间s=" & runtime)
+End If
+Delay StringDelay
 
 // 一个很大的分支
 // 主程序=================================
@@ -958,6 +1079,19 @@ Case 120
     MoveTo tlclose(0)+randnumber, tlclose(1)+randnumber
     Delay StringDelay
     LeftClick 1
+Case 130
+    // 经验壶满，勾上当天不再提醒，点取消
+    FindColor appL+410, appT+280, appL+770, appT+430,"4D5F72",intX,intY
+    If intX> 0 And intY> 0 Then
+        MoveTo intX+10+randnumber, intY+10+randnumber
+        Delay StringDelay
+        LeftClick 1
+        Delay 1000
+    End If
+    
+    MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
 Case 1
     // ==========================================================
     // 探索大地图界面
@@ -968,13 +1102,10 @@ Case 1
         // sub 不用延迟
         Call initBuffStatus()
         // 确认一下status
-        Delay 5000
     End If
     // 如果变换了MODE，那么要关闭加成
     // 0-大地图待命 1-副本 2-觉醒 3-御魂 4-突破 5-寮突破
     If buffinited And Not formerMode = MODE Then
-        // 检查buff状态
-        Call initBuffStatus()
         Select Case formerMode
             Case 1
                 If jy100buff > 0 And jy100status = True Then
@@ -1104,11 +1235,10 @@ Case 2
         Goto action_end
     End If
     searchTimes = searchTimes + 1
-    Call showTips("寻找战斗...")
+    Call showTips("副本中，寻找战斗..." & searchTimes)
     // 尝试用boss区域找色寻找boss
     FindColor 400+appL,170+appT,700+appL,appB-50,"2422A4",intX,intY
     If intX > 0 And intY > 0 Then 
-        Call showTips("boss出现...")
         MoveTo intX+randnumber, intY+randnumber
         Delay StringDelay
         LeftClick 1
@@ -1140,7 +1270,6 @@ Case 2
                     fbsearch = fbsearch + 1
                     // 单击阴阳师向右侧移动
                     Call dragmove(appR - 80, appB - 180, appL + 80, appB - 180, 2000, 5)
-                    Delay 3000
                 End If
             End If
         End If
@@ -1160,9 +1289,11 @@ Case 41
     If formerpage = 3 Then 
         btimes = btimes + 1
         Call countMark(1)
+        Call showTips("战斗胜利")
     End If
     // success
     searchTimes = 0
+    
     
     MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
     Delay StringDelay
@@ -1172,9 +1303,11 @@ Case 42
     If formerpage = 3 Then 
         btimes = btimes + 1
         Call countMark(0)
+        Call showTips("战斗失败")
     End If
     // fail
     searchTimes = 0
+
     MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
     Delay StringDelay
     LeftClick 1
@@ -1183,6 +1316,7 @@ Case 43
     If formerpage = 3 Then 
         btimes = btimes + 1
         Call countMark(1)
+        Call showTips("战斗胜利，结算领取")
     End If
     MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
     Delay StringDelay
@@ -1193,28 +1327,48 @@ Case 11
     If MODE = 5 and gtupo Then 
         FindPic appL, appT, appR, appB, "Attachment:\gtp_over.bmp", 1, intX, intY
         If intX > 0 And intY > 0 Then 
-            Call showTips("没有挑战次数了")
+            Call showTips("没有寮突破挑战次数了")
             gtpmark = 0
             MODE = 4
         Else
-            MoveTo jj1(0)+randnumber, jj1(1)+randnumber
-            Delay StringDelay
-            Call scrollfuben()
-            Delay StringDelay
-            Call scrollfuben()
-            Delay StringDelay
-            LeftClick 1
-            Delay StringDelay
-            // attack
-            FindPic appL, appT, appR, appB, "Attachment:\attack.bmp", 0.4, intX, intY
-            If intX > 0 And intY > 0 Then 
-                Call showTips("进攻按钮坐标: " & intX & "," & intY)
-                MoveTo intX+randnumber, intY+10+randnumber
+            // 阴阳寮突破
+            // appL+435,appT+105, appR-125, appB-80
+            Rem findOne
+            // 0勋章多点找色
+            XY=Plugin.Color.FindMutiColor(appL+435,appT+105, appR-125, appB-80,"8DA2B3","34|0|8DA2B3,67|0|8DA2B3,104|0|8DA2B3,138|0|8DA2B3",1)
+            tmparr = Split(XY, "|")
+            X = CInt(tmparr(0)): Y = CInt(tmparr(1))
+            If X > 0 And Y > 0 Then
+                MoveTo X+randnumber, Y+randnumber
                 Delay StringDelay
                 LeftClick 1
+                Delay StringDelay
+                
+                // attack
+                FindPic appL, appT, appR, appB, "Attachment:\attack.bmp", 0.4, intX, intY
+                If intX > 0 And intY > 0 Then 
+                    Call showTips("阴阳寮突破-点击进攻: " & intX & "," & intY)
+                    MoveTo intX+randnumber, intY+10+randnumber
+                    Delay StringDelay
+                    LeftClick 1
+                Else
+                    // 多点找字
+                    XY=Plugin.Color.FindMutiColor(appL, appT, appR, appB,"27343E","-1|5|202528,8|2|222A2F,12|1|242D34,12|17|202427",1)
+                    tmp = Split(XY, "|")
+                    X = CInt(tmp(0)): Y = CInt(tmp(1))
+                    If X > 0 And Y > 0 Then
+                        Call showTips("阴阳寮突破-点击进攻-多点找字: " & X & "," & Y)
+                        MoveTo X+randnumber, Y+10+randnumber
+                        Delay StringDelay
+                        LeftClick 1
+                    End If
+                End If
+            Else 
+                MoveTo jj1(0)+randnumber, jj1(1)+randnumber
+                Delay StringDelay
+                Call scrolljj()
             End If
         End If
-        
     Else 
         // 点击关闭
         MoveTo tupoclose(0)+randnumber, tupoclose(1)+randnumber
@@ -1252,7 +1406,7 @@ Case 12
                 Delay StringDelay
                 FindColor appL,appT,appR,appB,"5EB2F3",intX,intY
                 If intX> 0 And intY> 0 Then
-                    Call showTips("点击确认")
+                    Call showTips("刷新个人突破，点击确认")
                     MoveTo intX+20+randnumber, intY+10+randnumber
                     Delay StringDelay
                     LeftClick 1
@@ -1304,9 +1458,31 @@ Case 40
     // 御魂，点击挑战
     // 点击开始挑战
     If MODE = 3 and yuhun Then 
-        MoveTo tzbtn(0)+randnumber, tzbtn(1)+randnumber
-        Delay StringDelay
-        LeftClick 1
+        // todo 判断是否业原火副本，
+        // 业原火的业字
+        XY=Plugin.Color.FindMutiColor(appL+520, appT+130, appL+570, appT+230,"DEF1F6","0|3|DCEEF4,-4|7|DFF3F8,0|7|DCEFF4,0|11|DEF1F6,-5|14|E0F3F8,2|14|D7EAEF,8|13|E0F3F8,6|9|DEF0F6,7|4|D9ECF1,7|-1|DDEFF4,11|4|DEF1F6",1)
+        tmp = Split(XY, "|")
+        X = CInt(tmp(0)): Y = CInt(tmp(1))
+        If X > 0 And Y > 0 Then
+            // 是业原火副本
+            Call showTips("---->业原火副本中")
+            Call yyhjudge()
+            If yyh_can Then
+                MoveTo tzbtn(0)+randnumber, tzbtn(1)+randnumber
+                Delay StringDelay
+                LeftClick 1
+                Goto action_end
+            Else
+                // 去打八歧大蛇
+                MoveTo appL+430+randnumber, appB-80+randnumber
+                Delay StringDelay
+                LeftClick 1
+            End If
+        Else
+            MoveTo tzbtn(0)+randnumber, tzbtn(1)+randnumber
+            Delay StringDelay
+            LeftClick 1
+        End If
     Else 
         MoveTo closebtn(0)+randnumber, closebtn(1)+randnumber
         Delay StringDelay
@@ -1323,10 +1499,9 @@ Rem action_end
 FindPic appL,appT,appR,appB,"Attachment:\xuanshang.bmp",0.8,intX,intY
 If intX > 0 And intY > 0 Then 
     If xuanshang = False Then
-        Call showTips("finding deny")
         FindPic appL,appT,appR,appB,"Attachment:\deny.bmp",0.5,intX,intY
         If intX > 0 And intY > 0 Then 
-            Call showTips("deny invite")
+            Call showTips("拒绝悬赏邀请")
             MoveTo intX, intY
             Delay StringDelay
             LeftClick 1
@@ -1335,7 +1510,7 @@ If intX > 0 And intY > 0 Then
         Call showTips("finding accept")
         FindPic appL,appT,appR,appB,"Attachment:\accept.bmp",0.5,intX,intY
         If intX > 0 And intY > 0 Then 
-            Call showTips("accept invite")
+            Call showTips("接受悬赏邀请")
             MoveTo intX, intY
             Delay StringDelay
             LeftClick 1
