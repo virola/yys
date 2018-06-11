@@ -1,0 +1,281 @@
+// 默认延时
+StringDelay = 2000
+Delay 5000
+appL = 0
+appT = 40
+appR = 1024
+appB = 768
+
+Dim startTime
+startTime = Now
+
+Dim formerpage
+// 当前战斗次数
+btimes = 0
+// 随机数生成
+Function randnumber() 
+    最小 = -10*0.9 
+    最大 = 10*0.91 
+    // 根据实际情况设置，最小不要低过1 最大可以是3~~~10 或者3~~~~100。
+    Randomize
+    randnumber = Round((最大 - 最小 + 1) * Rnd + 最小) 
+End Function
+Dim formertxt
+// 屏幕显示提示
+Function showTips(txt)
+    //TracePrint txt
+    Main.tips.Caption = txt 
+    If formertxt = txt Then
+    Else
+        formertxt = txt
+        logtext = txt
+        Call savelog
+    End If
+End Function
+
+Dim logtext
+Sub savelog
+    logtext = Time & "   " & logtext  & " | 已运行时间s=" & runtime
+    Main.logtext.Text = Main.logtext.Text & logtext & vbCrLf
+End Sub
+// 随机点击屏幕
+Sub randomclick()
+    btop = 100
+    bright = 100
+    bleft = 200
+    bbottom = 250
+    Randomize
+    x = Round((appR -bright - appL - bleft) * Rnd + appL + bleft)
+    y = Round((appB - bbottom - appT  - btop) * Rnd + appT + btop)
+    MoveTo x, y 
+    Delay 1000
+    LeftClick 1
+End Sub
+Sub OnScriptExit()'脚本停止事件
+    btimes = 0
+    Call showTips("app stop.")
+End Sub
+
+// Form events
+Event Main.clearlog.Click
+    Main.logtext.Text = ""
+End Event
+
+
+Sub findapp()
+    // 句柄获取
+    dim yys 
+    // 找到程序位置
+    Call showTips("finding app...")
+    // 查找程序句柄
+    yys = Plugin.Window.Find(0, "阴阳师-网易游戏")
+    If yys <> 0 Then 
+        //激活窗口
+        Call Plugin.Window.Restore(yys)
+        sRect = Plugin.Window.GetClientRect(yys)
+        //下面这句用于分割字符串,将横坐标和纵坐标分成两个字符串   
+        dim MyArray
+        MyArray = Split(sRect, "|")   
+        //下面这句将字符串转换成数值   
+        appL = Clng(MyArray(0)): appT = Clng(MyArray(1))   
+        appR = Clng(MyArray(2)): appB = Clng(MyArray(3))   
+        Call showTips(yys & " |左" & appL & ",右 " & appR & ",上" & appT & ",下" & appB)
+    Else
+        Call showTips("阴阳师桌面版没有运行，请先运行游戏再启动程序")
+        ExitScript 
+    End If
+    Delay StringDelay
+End Sub
+
+Call findapp()
+
+// 觉醒入口
+Dim jxbtn(1)
+jxbtn(0) = 85 + appL
+jxbtn(1) = appB - 50
+// 准备按钮
+Dim readybtn(1)
+readybtn(0) = appR - 145
+readybtn(1) = appB - 180
+// pos
+Dim anypos(1)
+Dim closebtn(1)
+
+// 打开组队界面
+Sub openGroup()
+    MoveTo jxbtn(0) + randnumber, jxbtn(1) + randnumber
+    Delay StringDelay
+    LeftClick 1
+    // 选择材料入口
+    Delay StringDelay
+    MoveTo appL + 225+randnumber, 300 + appT+randnumber
+    Delay StringDelay
+    LeftClick 1
+    Delay StringDelay
+
+    // 找组队按钮
+    MoveTo 570+appL+randnumber, 440+appT+randnumber
+    Delay StringDelay
+    LeftClick 1
+End Sub
+
+// 去妖气封印
+Sub gotoyq()
+    XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"252A2D","-2|8|32383D,-6|9|25292D,0|14|202427,-5|18|383E43,4|18|2A2F33,15|18|202427,8|11|2B3135,13|8|2E3337,7|3|30363A,10|2|3F464C,12|0|282D31",1)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        Call showTips("点击妖气封印")
+        MoveTo X + randnumber, Y + randnumber
+        Delay StringDelay
+        LeftClick 1
+    End If
+End Sub
+
+Rem appstart
+
+// 判断运行时间
+runtime = DateDiff("s", startTime, Now)
+
+// 战斗次数
+maxtimes = CInt(Main.maxtimes.Text)
+If btimes > maxtimes Then
+    Call showTips("达到最大战斗次数，脚本停止运行")
+    ExitScript
+End If
+
+// 检测当前页
+nowpage = -1
+Do
+    // 大地图界面
+    XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"178ACE","-3|12|8B3189,15|1|8E368D,22|2|A03CA0,32|2|1680C5,33|9|AAD3E1,39|25|B1D8E4,48|36|2769A1,49|40|9BBECD",1)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        nowpage = 0
+        Goto checkend
+    End If
+
+    XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"E0F3F8","-2|9|DDF0F5,3|7|DBEEF3,1|14|E0F3F8,14|-2|DAECF1,11|-1|C5D7DD,8|0|A0B0B7,11|4|DBEDF2,7|7|E0F3F8,10|9|DFF2F7,16|15|E0F3F8",1)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        //Call showTips("在妖气封印界面")
+        nowpage = 10
+        Goto checkend
+    End If
+
+    XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"D6E8EE","-4|5|DDF0F5,-6|9|DFF2F7,2|6|DFF2F7,-2|11|DFF3F8,-5|16|E0F3F8,1|14|DCEFF4,-5|22|E0F3F8,7|5|DEF1F6,7|11|DCEFF4,7|21|E0F3F8,15|3|E0F3F8,15|11|E0F3F8,15|22|E0F3F8,18|22|E0F3F8",1)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        //Call showTips("在组队界面")
+        nowpage = 1
+        Goto checkend
+    End If
+
+    XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"D0F2FF","-5|10|D0F2FF,5|6|D0F2FF,0|12|D0F2FF,-4|19|D0F2FF,-4|28|D0F2FF,11|4|D0F2FF,11|18|D0F2FF,11|28|D0F2FF,22|28|D0F2FF,22|3|D0F2FF",1)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        //进入战斗
+        nowpage = 20
+    End If
+
+    FindColor appL,appT,appR,appB,"A1BBD4",intX,intY
+    If intX> 0 And intY> 0 Then
+        // 战斗准备
+        nowpage = 21
+        Goto checkend
+    End If
+
+    // battle end 
+    XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"31D3E1","5|9|081333,9|13|2CAFE0,6|19|3BB6E3,11|19|27B4E4",1)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        //战斗结束
+        Call showTips("战斗奖励结算")
+        nowpage = 30
+        anypos(0) = X : anypos(1) = Y
+        Goto checkend
+    End If
+
+    // fail
+    XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"50424A","6|22|51424A,-11|42|65525B,20|42|5A4950,42|42|69555F,29|80|6D5861,-3|80|836A74",1)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        //战斗结束
+        Call showTips("战斗失败")
+        nowpage = 30
+        anypos(0) = X : anypos(1) = Y
+        Goto checkend
+    End If
+
+    // other has close icon
+    FindPic appL,appT,appR,appB, "Attachment:\close.bmp", 0.5, intX, intY
+    If intX > 0 and intY > 0 Then 
+        Call showTips("has close btn_" & intX & "," & intY) 
+        closebtn(0) = intX + 10
+        closebtn(1) = intY + 10
+        //nowpage = 3
+    End If
+
+    Rem checkend
+    Exit Do
+Loop
+
+Call showTips("nowpage=" & nowpage & " | btimes=" & btimes)
+
+Select Case nowpage
+    Case 0
+        Call openGroup()
+    Case 1
+        Call gotoyq()
+    Case 3
+        MoveTo closebtn(0)+randnumber, closebtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+    Case 10
+        // 检测有的妖气封印
+        // 点击刷新
+        MoveTo appL+430+randnumber, appB-70+randnumber
+        Delay 500
+        LeftClick 1
+
+        // check yaoqi
+        For 3
+            // 日和坊
+            XY=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"2D3236","0|4|262B2E,-3|11|222629,9|-1|25292D,8|7|272B2E,10|15|202427",1)
+            MyArray = Split(XY, "|")
+            X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+            If X > 0 And Y > 0 Then
+                Call showTips("日和坊: " & X & "," & Y)
+                MoveTo X + 450 + randnumber, Y + 20+randnumber
+                Delay 300
+                LeftClick 1
+                Exit For
+            End If
+            Delay 500
+        Next
+    Case 21
+        MoveTo readybtn(0)+randnumber, readybtn(1)+randnumber
+        Delay 1000
+        LeftClick 1
+    Case 30
+        MoveTo anypos(0) + randnumber, anypos(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
+        If formerpage <> 30 Then
+            btimes = btimes + 1
+        End If
+End Select
+
+Delay 1000
+
+If formerpage <> nowpage Then
+    formerpage = nowpage
+End If
+
+Goto appstart

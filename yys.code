@@ -26,6 +26,8 @@ Global gtpcount
 Global jxcount
 Global fbcount
 Global yhcount
+Global runtime
+runtime = 0
 // init count
 tpcount = CInt(Main.tpcount.Caption)
 gtpcount = CInt(Main.gtpcount.Caption)
@@ -93,11 +95,13 @@ Function randnumber()
     Randomize
     randnumber = Round((最大 - 最小 + 1) * Rnd + 最小) 
 End Function
+Dim formertxt
 // 屏幕显示提示
 Function showTips(txt)
     Main.tips.Caption = txt 
-    If logtext = txt Then
+    If formertxt = txt Then
     Else
+        formertxt = txt
         logtext = txt
         Call savelog
     End If
@@ -105,7 +109,7 @@ End Function
 
 Dim logtext
 Sub savelog
-    logtext = Time & "   " & logtext
+    logtext = Time & "   " & logtext  & " | 已运行时间s=" & runtime
     Main.logtext.Text = Main.logtext.Text & logtext & vbCrLf
 End Sub
 // 随机点击屏幕
@@ -530,7 +534,7 @@ Sub initBuffStatus()
                 jy50status = False
             End If
         End If
-        FindPic appL, appT, appR, appB, "Attachment:\jy100.bmp", 0.8, intx4, inty4
+        FindPic appL, appT, appR, appB, "Attachment:\jy100.bmp", 0.7, intx4, inty4
         If intx4 > 0 And inty4 > 0 Then
             jy100buff = inty4 + offset
             x1 = 420 + appL+randnumber
@@ -558,7 +562,7 @@ End Sub
 // 打开对应类型的buff
 // 2-觉醒 3-御魂 10-金币加成 50-经验50 100-经验100
 Sub addbuff(bufftype)
-    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.8, x, y
+    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.7, x, y
     If x > 0 And y > 0 Then
         MoveTo x+randnumber, y+randnumber
         Delay StringDelay
@@ -591,11 +595,12 @@ Sub addbuff(bufftype)
         MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
         Delay StringDelay
         LeftClick 1
+        Delay StringDelay
     End If
 End Sub
 // close buff 
 Sub closebuff(bufftype)
-    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.8, x, y
+    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.7, x, y
     If x > 0 And y > 0 Then
         MoveTo x+randnumber, y+randnumber
         Delay StringDelay
@@ -629,6 +634,7 @@ Sub closebuff(bufftype)
         MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
         Delay StringDelay
         LeftClick 1
+        Delay StringDelay
     End If
 End Sub
 // 副本章节滚动4个副本
@@ -685,21 +691,18 @@ Sub yyhjudge()
     ttanx = CInt(arr(0)): ttany = CInt(arr(1))
     If ttanx > 0 And ttany > 0 Then
         yyhpos = 1
-        Traceprint "xiaohaoquan is tan"
     End If
     chen=Plugin.Color.FindMutiColor(appL+700, appT+400, appL+760, appT+460, "1B9AD8","3|-1|1C98D4,7|-2|E5BCD6,14|0|8E4993,8|9|3A3D42,5|17|B4CEE1",1)
     arr2 = Split(chen, "|")
     chenx = CInt(arr2(0)): cheny = CInt(arr2(1))
     If chenx > 0 And cheny > 0 Then
         yyhpos = 2
-        Traceprint "xiaohaoquan is chen"
     End If
     chi=Plugin.Color.FindMutiColor(appL+700, appT+400, appL+760, appT+460,"066ED9","5|-4|46ACE9,9|-4|38B8E1,13|-4|BBD3E0,18|-4|1480B5,11|6|1D1B1A",1)
     arr3 = Split(chi, "|")
     chix = CInt(arr3(0)): chiy = CInt(arr3(1))
     If chix > 0 And chiy > 0 Then
         yyhpos = 3
-        Traceprint "xiaohaoquan is chi"
     End If
 
     // 消耗券数量
@@ -734,6 +737,9 @@ End Sub
 // ======================================
 Dim formerpage '前面那个页面是什么
 Dim formerMode '前面那个MODE是什么
+Dim prevMode '前一个模式是什么
+formerMode = 0
+prevMode = 0
 //
 // ========================================
 // 程序开始标记 start 
@@ -790,16 +796,18 @@ If MODE = 5 And gtupo = False Then
     ExitScript
 End If
 // loopcount
+jxval = CInt(Main.jxval.Text)
+yhval = CInt(Main.yhval.Text)
 // 超过用户设置最大战斗次数
 If MODE = 1 And fbmark > 50 Then
     fbmark = 0
     // 去觉醒
     MODE = 2
-ElseIf MODE = 2 And jxmark > 50 Then 
+ElseIf MODE = 2 And jxmark > jxval Then 
     jxmark = 0
     // 御魂
     MODE = 3
-Elseif MODE = 3 And yhmark > 50 Then
+Elseif MODE = 3 And yhmark > yhval Then
     yhmark = 0
     // 突破
     MODE = 5
@@ -841,21 +849,37 @@ Main.time.Caption = Now
 // check界面处在哪个页面 nowPage
 // ================================================
 Do
+    If juqing Then
+        // 自动过剧情
+        iCoord=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"DDEFFF","8|-3|DDEFFF,17|1|DDEFFF,17|10|DDEFFF,11|15|DDEFFF,9|19|DDEFFF,6|35|DDEFFF,8|35|DDEFFF,10|35|DDEFFF",1)
+        XY = Split(iCoord, "|")
+        If XY(0) > 0 And XY(1) > 0 Then 
+            skipbtn(0) = XY(0)
+            skipbtn(1) = XY(1)
+            nowPage = 200
+            Goto check_end
+        End If
+        iCoord=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"2F3943","2|3|CADCE1,4|6|D6E8ED,1|11|D2E5EA,10|7|CCDEE3,17|7|C1D3D8,19|13|DDF0F5,28|11|D9EBF1",1)
+        XY = Split(iCoord, "|")
+        If XY(0) > 0 And XY(1) > 0 Then 
+            skipbtn(0) = XY(0)
+            skipbtn(1) = XY(1)
+            nowPage = 200
+            Goto check_end
+        End If
+        iCoord=Plugin.Color.FindMutiColor(appL,appT,appR,appB,"312236","7|0|7EA5CE,7|-6|89B1D7,7|9|769CC7,14|1|85ACD3,20|1|8CB4D9,25|1|8CB4D9,36|1|7FA5CE,39|1|96BDDF,46|1|2B202B",1)
+        XY = Split(iCoord, "|")
+        If XY(0) > 0 And XY(1) > 0 Then 
+            skipbtn(0) = XY(0)
+            skipbtn(1) = XY(1)
+            nowPage = 200
+            Goto check_end
+        End If
+    End If
     // 首页
     FindPic appL, appT, appR, appB, "Attachment:\home_icon.bmp", 0.8, intX, intY
     If intX > 0 And intY > 0 Then 
         nowPage = 0
-
-        // 剧情页面
-        iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\skip.bmp|000.bmp|skip2.bmp|quick.bmp", 0, 0.5)   
-        XY = Split(iCoord, "|")
-        If XY(0) > 0 And XY(1) > 0 Then 
-            Call showTips("has skip btn") 
-            skipbtn(0) = XY(0)
-            skipbtn(1) = XY(1)
-            nowPage = 200
-        End If
-
         Goto check_end
     End If
     // 探索界面
@@ -1006,6 +1030,7 @@ Do
     If intX > 0 And intY > 0 Then 
         nowPage = 120 
         Call showTips("体力不足，停止战斗" & intX & "," & intY)
+        Goto check_end
     End If
     // 经验满了
     FindPic appL, appT, appR, appB, "Attachment:\tojj.bmp", 0.8, intX, intY
@@ -1024,7 +1049,7 @@ Do
 Loop
 
 If nowPage > 0 And formerpage <> nowPage Then
-    Call showTips("=======>当前:" & nowPage & " |  MODE=" & MODE & " | 已运行时间s=" & runtime)
+    Call showTips("=======>当前:" & nowPage & " |  MODE=" & MODE)
 End If
 Delay StringDelay
 
@@ -1048,12 +1073,17 @@ Case 0
         Goto gift_check
     End If
 
-    FindPic appL,appT,appR,appB,"Attachment:\lamp.bmp",0.6,intX,intY
-    // 点击进入探索界面
-    If intX > 0 And intY > 0 Then
-        MoveTo intX+randnumber, intY+randnumber
-        Delay StringDelay
-        LeftClick 1
+    If MODE > 0 Then
+        FindPic appL,appT,appR,appB,"Attachment:\lamp.bmp",0.6,intX,intY
+        // 点击进入探索界面
+        If intX > 0 And intY > 0 Then
+            MoveTo intX+randnumber, intY+randnumber
+            Delay StringDelay
+            LeftClick 1
+        End If
+    Else
+        // 没有体力，待机30分钟
+        Delay 30 * 60 * 1000
     End If
     
 Case 10
@@ -1063,7 +1093,7 @@ Case 10
 Case 50
     FindColor appL,appT,appR,appB,"5EB2F3",intX,intY
     If intX > 0 And intY > 0 Then 
-        // 可以点击开始了
+        // 组队点击开始
         MoveTo intX, intY
         Delay StringDelay
         LeftClick 1
@@ -1075,7 +1105,13 @@ Case 100
     LeftClick 1
 Case 120
     // 体力不足，去打突破
-    MODE = 4
+    // 判断是不是刚打完突破，如果刚打完突破，那么进行待机模式
+    If prevMode = 4 Then
+        MODE = 0
+    Else
+        MODE = 5
+    End If
+    
     MoveTo tlclose(0)+randnumber, tlclose(1)+randnumber
     Delay StringDelay
     LeftClick 1
@@ -1123,11 +1159,17 @@ Case 1
                     Call closebuff(3)
                 End If
         End Select
+        prevMode = formerMode
         formerMode = MODE
     End If
 
     // 判断当前模式是啥
     Select Case MODE
+    Case 0
+        // 回到首页
+        MoveTo backbtn(0)+randnumber, backbtn(1)+randnumber
+        Delay StringDelay
+        LeftClick 1
     Case 1
         // 如果要加成，则打开加成先
         If Main.jy50buff.Value And jy50status = False And jy50buff > 0 Then
@@ -1279,11 +1321,11 @@ Case 3
     Call randomclick()
 Case 31
     // 31-准备界面
-    Call showTips("在准备界面")
     // 考虑检测狗粮
     MoveTo readyBtn(0)+randnumber, readyBtn(1)+randnumber
     Delay 1000
     LeftClick 1
+    Call showTips("在准备界面，点击准备")
 Case 41
     // 前置战斗中才计算次数
     If formerpage = 3 Then 
