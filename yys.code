@@ -1084,6 +1084,7 @@ Case 0
     Else
         // 没有体力，待机30分钟
         Delay 30 * 60 * 1000
+        MODE = 5
     End If
     
 Case 10
