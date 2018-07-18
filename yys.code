@@ -28,6 +28,8 @@ Global fbcount
 Global yhcount
 Global runtime
 runtime = 0
+Global djtime '待机时间
+djtime = 0
 // init count
 tpcount = CInt(Main.tpcount.Caption)
 gtpcount = CInt(Main.gtpcount.Caption)
@@ -35,6 +37,8 @@ jxcount = CInt(Main.jxcount.Caption)
 fbcount = CInt(Main.fbcount.Caption)
 yhcount = CInt(Main.yhcount.Caption)
 
+Global canGroupTupo
+canGroupTupo = 1
 // ====================================================================================
 // 程序界面事件处理
 // ====================================================================
@@ -321,6 +325,8 @@ restmark = startTime
 // 自动关机时间
 // 战斗寻找次数
 searchTimes = 0
+// 寮突破查询次数
+gtpsearch = 0
 // 结界攻击序号标记
 jjnum = 0
 // 关闭按钮位置
@@ -791,9 +797,11 @@ End If
 If MODE = 4 And tupo = False Then
     MODE = 5
 End If
-If MODE = 5 And gtupo = False Then
-    Call showTips("没有打开寮突破，脚本停止")
-    ExitScript
+If MODE = 5 Then
+    If canGroupTupo = 0 Or gtupo = False Then
+        Call showTips("不能进行寮突破")
+        MODE = 1
+    End If
 End If
 // loopcount
 jxval = CInt(Main.jxval.Text)
@@ -815,6 +823,7 @@ End If
 If MODE = 5 And gtpmark = 6 Then
     Call showTips("寮突破成功满6次，去个人突破")
     gtpmark = 0
+    gtpsearch = 0
     MODE = 4
 End If
 // PC端限制的每日战斗次数
@@ -1060,6 +1069,7 @@ Delay StringDelay
 Select Case nowPage
 Case 0
     searchTimes = 0
+    gtpsearch = 0
     // 看看有没有东西领
     Rem gift_check
     iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\gouyu.bmp|tili_icon.bmp|sign_in.bmp|letter.bmp|allletter.bmp|queren.bmp", 0, 0.5)   
@@ -1082,9 +1092,14 @@ Case 0
             LeftClick 1
         End If
     Else
-        // 没有体力，待机30分钟
-        Delay 30 * 60 * 1000
-        MODE = 5
+        djdiff = DateDiff("s", djtime, Now)
+        If DateDiff("s", djtime, Now) > 30 * 60 Then
+            // 没有体力，待机30分钟后去寮突破
+            MODE = 5
+            djtime = Now
+        End If
+        
+        
     End If
     
 Case 10
@@ -1109,6 +1124,7 @@ Case 120
     // 判断是不是刚打完突破，如果刚打完突破，那么进行待机模式
     If prevMode = 4 Then
         MODE = 0
+        djtime = Now
     Else
         MODE = 5
     End If
@@ -1372,8 +1388,16 @@ Case 11
         If intX > 0 And intY > 0 Then 
             Call showTips("没有寮突破挑战次数了")
             gtpmark = 0
+            gtpsearch = 0
             MODE = 4
         Else
+            If gtpsearch > 10 Then
+                // 找不到可突破的结界
+                Call showTips("没有可突破的结界")
+                canGroupTupo = 0
+                MODE = 4
+                Goto action_end
+            End If
             // 阴阳寮突破
             // appL+435,appT+105, appR-125, appB-80
             Rem findOne
@@ -1411,6 +1435,7 @@ Case 11
                 Delay StringDelay
                 Call scrolljj()
             End If
+            gtpsearch = gtpsearch + 1
         End If
     Else 
         // 点击关闭
