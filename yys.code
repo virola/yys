@@ -1,5 +1,5 @@
 // 默认延时
-StringDelay = 2000
+StringDelay = 1500
 Delay 5000
 appL = 0
 appT = 40
@@ -454,6 +454,7 @@ Sub jjorder()
         Delay StringDelay
         LeftClick 1
         jjnum = jjnum + 1
+        ' nowPage = 3
     End If
 End Sub
 
@@ -461,19 +462,21 @@ End Sub
 Dim yhstatus
 Dim jxstatus
 Dim jy50status
-DIm jy100status
+Dim jy100status
+Dim jinbistatus
 // 按钮的X位置相同
 buffx = 790
 Dim yhbuff '御魂buff按钮
 Dim jxbuff
 Dim jy50buff
 Dim jy100buff
+Dim jbbuff
 Dim buffinited
 buffinited = False
 // 记录当前登录的buff状态
 // 时间5000
 Sub initBuffStatus()
-    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.8, x, y
+    FindPic appL, appT, appR, appB, "Attachment:\buff.bmp", 0.7, x, y
     If x > 0 And y > 0 Then
         MoveTo x+randnumber, y+randnumber
         Delay StringDelay
@@ -485,7 +488,7 @@ Sub initBuffStatus()
         // buff position
         offset = -20
 
-        FindPic appL, appT, appR, appB, "Attachment:\yhbuff.bmp", 0.8, intx1, inty1
+        FindPic appL, appT, appR, appB, "Attachment:\yhbuff.bmp", 0.7, intx1, inty1
         If intx1 > 0 And inty1 > 0 Then 
             yhbuff = inty1 + offset
             
@@ -505,7 +508,7 @@ Sub initBuffStatus()
             End If
         End If
         // juexing buff 
-        FindPic appL, appT, appR, appB, "Attachment:\jxbuff.bmp", 0.8, intx2, inty2
+        FindPic appL, appT, appR, appB, "Attachment:\jxbuff.bmp", 0.7, intx2, inty2
         If intx2 > 0 And inty2 > 0 Then 
             jxbuff = inty2 + offset
             x1 = 420 + appL+randnumber
@@ -523,7 +526,7 @@ Sub initBuffStatus()
                 jxstatus = False
             End If
         End If
-        FindPic appL, appT, appR, appB, "Attachment:\jy50.bmp", 0.8, intx3, inty3
+        FindPic appL, appT, appR, appB, "Attachment:\jy50.bmp", 0.7, intx3, inty3
         If intx3 > 0 And inty3 > 0 Then
             jy50buff = inty3 + offset
             x1 = 420 + appL+randnumber
@@ -556,7 +559,24 @@ Sub initBuffStatus()
                 jy100status = False
             End If
         End If
-        Call showTips("init buff status:" & jxstatus & " | " & yhstatus & " | " & jy50status & " | " & jy100status)
+        // 金币加成
+        FindPic appL, appT, appR, appB, "Attachment:\jinbi.bmp", 0.6, intx, inty
+        If intx > 0 And inty > 0 Then
+            jbbuff = inty + offset
+            x1 = 420 + appL+randnumber
+            y1 = inty
+            x2 = 470 + appL+randnumber
+            y2 = inty + 30
+            FindColor x1, y1, x2, y2,"00B5EB",x7,y7
+            If x7> 0 And y7> 0 Then
+                jinbistatus = True
+            End If
+            FindColor x1, y1, x2, y2,"0218E1",x8,y8
+            If x8> 0 And y8> 0 Then
+                jinbistatus = False
+            End If
+        End If
+        Call showTips("init buff status:" & jxstatus & " | " & yhstatus & " | " & jy50status & " | " & jy100status & " | " & jinbistatus)
         buffinited = True
         MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
         Delay StringDelay
@@ -586,6 +606,11 @@ Sub addbuff(bufftype)
                 Delay StringDelay
                 LeftClick 1
                 yhstatus = True
+            Case 10
+                MoveTo buffx + appL, jbbuff + appT
+                Delay StringDelay
+                LeftClick 1
+                jinbistatus = True
             Case 50
                 MoveTo buffx + appL, jy50buff + appT
                 Delay StringDelay
@@ -886,18 +911,18 @@ Do
         End If
     End If
     // 首页
-    FindPic appL, appT, appR, appB, "Attachment:\home_icon.bmp", 0.8, intX, intY
+    FindPic appL, appT, appR, appB, "Attachment:\home_icon.bmp", 0.5, intX, intY
     If intX > 0 And intY > 0 Then 
         nowPage = 0
         Goto check_end
     End If
     // 探索界面
-    FindPic appL,appT,appR,appB,"Attachment:\fuben_back.bmp",0.8,intX,intY
+    FindPic appL,appT,appR,appB,"Attachment:\fuben_back.bmp",0.7,intX,intY
     If intX > 0 And intY > 0 Then 
         backbtn(0) = intX
         backbtn(1) = intY
         // 判断是否有副本title图
-        FindPic appL,appT,appR,appB,"Attachment:\yao.bmp",0.8,tx,ty
+        FindPic appL,appT,appR,appB,"Attachment:\yao-new.bmp",0.8,tx,ty
         If tx > 0 And ty > 0 Then 
             // 判断是否有副本章节
             nowPage = 1
@@ -921,18 +946,18 @@ Do
         Goto check_end
     Else 
         // 战斗中
-        FindPic appL,appT,appR,appB,"Attachment:\back.bmp",0.8,intX,intY
+        FindPic appL,appT,appR,appB,"Attachment:\back.bmp",0.7,intX,intY
         If intX > 0 And intY > 0 Then 
             nowPage = 3
             // ready interface
-            FindPic appL,appT,appR,appB,"Attachment:\ready.bmp",0.8,intX,intY
+            FindPic appL,appT,appR,appB,"Attachment:\ready.bmp",0.7,intX,intY
             If intX > 0 And intY > 0 Then 
                 nowPage = 31
             End If
             Goto check_end
         Else 
             // 胜利
-            FindPic appL,appT,appR,appB,"Attachment:\win.bmp",0.8,intX,intY
+            FindPic appL,appT,appR,appB,"Attachment:\win.bmp",0.7,intX,intY
             If intX > 0 And intY > 0 Then 
                 anyPos(0) = intX
                 anyPos(1) = intY
@@ -940,7 +965,7 @@ Do
                 Goto check_end
             End If
             // 失败
-            FindPic appL,appT,appR,appB,"Attachment:\fail.bmp",0.8,intX,intY
+            FindPic appL,appT,appR,appB,"Attachment:\fail.bmp",0.7,intX,intY
             If intX > 0 And intY > 0 Then 
                 anyPos(0) = intX
                 anyPos(1) = intY
@@ -948,7 +973,18 @@ Do
                 Goto check_end
             End If
             // 战斗结算
-            iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\gift.bmp|gift_new.bmp", 0, 0.7)   
+            XY=Plugin.Color.FindMutiColor(appL+470,appT+300,appR,appB,"4738D7","18|14|99B5CA,26|77|1A43BA",0.9)
+            MyArray = Split(XY, "|")
+            X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+            If X > 0 and Y > 0 Then 
+                Call showTips("战斗结算找多点OK")
+                anyPos(0) = X
+                anyPos(1) = Y
+                nowPage = 43
+                Goto check_end
+            End If
+
+            iCoord = Plugin.Pic.FindMultiPic(appL,appT,appR,appB, "Attachment:\gift.bmp|gift_new.bmp", 0, 0.5)   
             XY = Split(iCoord, "|")
             If XY(0) > 0 and XY(1) > 0 Then 
                 anyPos(0) = XY(0)
@@ -1005,7 +1041,7 @@ Do
         // 突破界面
         FindPic appL,appT,appR,appB, "Attachment:\yyltp.bmp", 0.3, x, y
         If x > 0 and y > 0 Then 
-            FindPic appL,appT,appR,appB, "Attachment:\personal.bmp", 0.7, x, y
+            FindPic appL,appT,appR,appB, "Attachment:\person.bmp", 0.8, x, y
             If x > 0 and y > 0 Then 
                 nowPage = 12
             Else 
@@ -1027,7 +1063,7 @@ Do
             End If
         End If
         // 是否有探索按钮，有就是进入副本界面
-        FindPic appL, appT, appR, appB, "Attachment:\tsbtn.bmp", 0.8, intX, intY
+        FindPic appL, appT, appR, appB, "Attachment:\tsbtn.bmp", 0.7, intX, intY
         If intX > 0 And intY > 0 Then 
             nowPage = 20
             Goto check_end
@@ -1035,14 +1071,14 @@ Do
     End If
     // 战斗中不足
     // 体力不足的购买界面
-    FindPic appL, appT, appR, appB, "Attachment:\buytili.bmp", 0.8, intX, intY
+    FindPic appL, appT, appR, appB, "Attachment:\buytili.bmp", 0.7, intX, intY
     If intX > 0 And intY > 0 Then 
         nowPage = 120 
         Call showTips("体力不足，停止战斗" & intX & "," & intY)
         Goto check_end
     End If
     // 经验满了
-    FindPic appL, appT, appR, appB, "Attachment:\tojj.bmp", 0.8, intX, intY
+    FindPic appL, appT, appR, appB, "Attachment:\tojj.bmp", 0.7, intX, intY
     If intX > 0 And intY > 0 Then 
         nowPage = 130 
         Call showTips("经验壶满" & intX & "," & intY)
@@ -1195,6 +1231,7 @@ Case 1
         If Main.jy100buff.Value And jy100status = False And jy100buff > 0 Then
             Call addbuff(100)
         End If
+        Call addbuff(10)
         // ========================================
         // 刷副本
         // 点击右侧副本入口
@@ -1335,17 +1372,17 @@ Case 2
     End If
 Case 3
     searchTimes = 0
-    Call randomclick()
+    ' Call randomclick()
 Case 31
     // 31-准备界面
     // 考虑检测狗粮
     MoveTo readyBtn(0)+randnumber, readyBtn(1)+randnumber
-    Delay 1000
+    Delay 1500
     LeftClick 1
     Call showTips("在准备界面，点击准备")
 Case 41
     // 前置战斗中才计算次数
-    If formerpage = 3 Then 
+    If formerpage = 3 Or formerpage = 31 Then 
         btimes = btimes + 1
         Call countMark(1)
         Call showTips("战斗胜利")
@@ -1353,13 +1390,12 @@ Case 41
     // success
     searchTimes = 0
     
-    
     MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
     Delay StringDelay
     LeftClick 1
 Case 42
     // 前置战斗中才计算次数
-    If formerpage = 3 Then 
+    If formerpage = 3 Or formerpage = 31 Then 
         btimes = btimes + 1
         Call countMark(0)
         Call showTips("战斗失败")
@@ -1372,7 +1408,7 @@ Case 42
     LeftClick 1
 Case 43
     // 前置战斗中才计算次数
-    If formerpage = 3 Then 
+    If formerpage = 3 Or formerpage = 31 Then 
         btimes = btimes + 1
         Call countMark(1)
         Call showTips("战斗胜利，结算领取")
@@ -1381,7 +1417,7 @@ Case 43
     Delay StringDelay
     LeftClick 1
 Case 11
-    // 了突破
+    // 个人突破
     // gtupo
     If MODE = 5 and gtupo Then 
         FindPic appL, appT, appR, appB, "Attachment:\gtp_over.bmp", 1, intX, intY
@@ -1418,6 +1454,7 @@ Case 11
                     MoveTo intX+randnumber, intY+10+randnumber
                     Delay StringDelay
                     LeftClick 1
+                    ' nowPage = 3
                 Else
                     // 多点找字
                     XY=Plugin.Color.FindMutiColor(appL, appT, appR, appB,"27343E","-1|5|202528,8|2|222A2F,12|1|242D34,12|17|202427",1)
@@ -1428,6 +1465,7 @@ Case 11
                         MoveTo X+randnumber, Y+10+randnumber
                         Delay StringDelay
                         LeftClick 1
+                        ' nowPage = 3
                     End If
                 End If
             Else 
@@ -1564,7 +1602,7 @@ End Select
 Rem action_end
 
 // 悬赏封印
-FindPic appL,appT,appR,appB,"Attachment:\xuanshang.bmp",0.8,intX,intY
+FindPic appL,appT,appR,appB,"Attachment:\xuanshang.bmp",0.7,intX,intY
 If intX > 0 And intY > 0 Then 
     If xuanshang = False Then
         FindPic appL,appT,appR,appB,"Attachment:\deny.bmp",0.5,intX,intY
@@ -1599,5 +1637,6 @@ If btimes > maxBattle Then
 End If
 
 Call updateaction()
-Delay StringDelay
+' delay 1s
+Delay 1000
 Goto appstart
