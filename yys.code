@@ -921,27 +921,35 @@ Do
     If intX > 0 And intY > 0 Then 
         backbtn(0) = intX
         backbtn(1) = intY
-        // 判断是否有副本title图
-        FindPic appL,appT,appR,appB,"Attachment:\yao-new.bmp",0.8,tx,ty
-        If tx > 0 And ty > 0 Then 
-            // 判断是否有副本章节
+        // 多点找字 妖
+        XY=Plugin.Color.FindMutiColor(appR - 200,appT + 100,appR,appT + 200,"05050F","3|5|04040B,-3|8|0B0A13,0|12|1A1A24,9|5|1B1B25,4|14|151618,15|14|11121C,12|-2|000001",0.9)
+        MyArray = Split(XY, "|")
+        X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+        If X > 0 And Y > 0 Then 
             nowPage = 1
-
-            // 检测妖气
-            If shiju Then
-                iCoord = Plugin.Pic.FindMultiPic(yq(0), yq(1), yq(2), yq(3), "Attachment:\nianshou.bmp|sj_side.bmp|baoxiang.bmp|yaoqi.bmp", 0, 0.7)
-                XY = Split(iCoord, "|")
-                If XY(0) > 0 and XY(1) > 0 Then 
-                    Call showTips("发现石距/年兽/妖气封印副本/宝箱")
-                    sjbtn(0) = XY(0)
-                    sjbtn(1) = XY(1) - 20
-                    nowPage = 100
-                    Goto check_end
-                End If
+            Call showTips("多点找字-妖")
+        Else
+            // 判断是否有副本title图
+            iCoord = Plugin.Pic.FindMultiPic(appR - 200,appT + 100,appR,appT + 200, "Attachment:\yao.bmp|yao-new.bmp|yao2.bmp", 0, 0.7)
+            XY = Split(iCoord, "|")
+            If XY(0) > 0 and XY(1) > 0 Then 
+                nowPage = 1
+            Else 
+                nowPage = 2
             End If
+        End If        
 
-        Else 
-            nowPage = 2
+        // 检测妖气
+        If nowPage = 1 And shiju Then
+            iCoord = Plugin.Pic.FindMultiPic(yq(0), yq(1), yq(2), yq(3), "Attachment:\nianshou.bmp|sj_side.bmp|baoxiang.bmp|yaoqi.bmp", 0, 0.7)
+            XY = Split(iCoord, "|")
+            If XY(0) > 0 and XY(1) > 0 Then 
+                Call showTips("发现石距/年兽/妖气封印副本/宝箱")
+                sjbtn(0) = XY(0)
+                sjbtn(1) = XY(1) - 20
+                nowPage = 100
+                Goto check_end
+            End If
         End If
         Goto check_end
     Else 
@@ -1087,6 +1095,16 @@ Do
             anyPos(0) = ix + 30
             anyPos(1) = iy + 10
         End If
+    End If
+
+    // 宠物发现宝藏
+    XY=Plugin.Color.FindMutiColor(appL, appT, appR, appB,"A7DDEE","-12|18|82C2D7,12|12|91CDE1,29|23|76B7CE,64|3|A3DAEC,83|-1|A8DEEF,86|9|99D2E5,157|9|99D2E5",0.9)
+    MyArray = Split(XY, "|")
+    X = CInt(MyArray(0)): Y = CInt(MyArray(1))
+    If X > 0 And Y > 0 Then
+        nowPage = 45
+        anyPos(0) = appR - 100 - randnumber
+        anyPos(1) = appB - 100 - randnumber
     End If
     
     Rem check_end
@@ -1413,6 +1431,11 @@ Case 43
         Call countMark(1)
         Call showTips("战斗胜利，结算领取")
     End If
+    MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
+    Delay StringDelay
+    LeftClick 1
+Case 45
+    // 宠物发现宝藏
     MoveTo anyPos(0)+randnumber, anyPos(1)+randnumber
     Delay StringDelay
     LeftClick 1
